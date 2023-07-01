@@ -9,7 +9,7 @@ ifeq ($(OS),Windows_NT)
 	GREEN  = Green
 	YELLOW = Yellow
 	BLUE   = Blue
-	PURPLE = Purple
+	PURPLE = Magenta
 	CYAN   = Cyan
 	WHITE  = White
 
