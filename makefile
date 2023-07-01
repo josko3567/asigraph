@@ -1,7 +1,30 @@
 # Setup console for windows...
 ifeq ($(OS),Windows_NT)
+
 	SHELL := powershell.exe
 	.SHELLFLAGS := -Command
+	BOLD   = 1
+	BLACK  = Black
+	RED    = Red
+	GREEN  = Green
+	YELLOW = Yellow
+	BLUE   = Blue
+	PURPLE = Purple
+	CYAN   = Cyan
+	WHITE  = White
+
+else
+
+	BOLD   = 0
+	BLACK  = \e[$(BOLD);90m
+	RED    = \e[$(BOLD);31m
+	GREEN  = \e[$(BOLD);92m
+	YELLOW = \e[$(BOLD);93m
+	BLUE   = \e[$(BOLD);94m
+	PURPLE = \e[$(BOLD);35m
+	CYAN   = \e[$(BOLD);96m
+	WHITE  = \e[$(BOLD);97m
+
 endif
 
 #Static library build...
@@ -23,6 +46,18 @@ CFLAGS = -Wall -Wextra -Wpedantic \
 	 -Wredundant-decls -Wnested-externs -Wmissing-include-dirs \
 	 -pipe -std=c2x
 
+
+# Printing setup
+PRINT_COLOR =
+PRINT =
+ifeq ($(OS), Windows_NT)
+	PRINT =Write-Host
+	PRINT_COLOR = -ForegroundColor $(1) "$(2)"
+else
+	PRINT =echo
+	PRINT_COLOR = -e "$(1)$(2)\e[0;97m"
+endif
+
 # Setup debug commands and libraries to work on OS basis...
 ifeq ($(DEBUG), f) 
 	undefine VIWERR
@@ -36,8 +71,15 @@ else
 	DFLAGS = -g -DAG_DEV
 endif
 
+# List all source directories and create a list of their files for object
+# compilation...
+SOURCE_DIRS = ./src
+SRC = $(foreach D,$(SOURCE_DIRS),$(wildcard $(D)/*.c))   
+OBJ = $(patsubst %.c,%.o,$(SRC))   
+
 # Setup static suffix, executable suffix and cleanup functionality
 # on OS basis...
+REMOVE =
 ifeq ($(OS),Windows_NT)
     EXECUTE_TEST := $(addsuffix .exe, $(EXECUTE_TEST))
     STATIC := $(addsuffix .lib, $(STATIC))
@@ -45,39 +87,34 @@ ifeq ($(OS),Windows_NT)
 else
     EXECUTE_TEST := $(addsuffix .out, $(EXECUTE_TEST))
     STATIC := $(addsuffix .a, $(STATIC))
-    REMOVE = rm -f $(OBJ) $(STATIC)
+    REMOVE = rm -f $(OBJ) $(STATIC) $(EXECUTE_TEST)
 endif
-
-# List all source directories and create a list of their files for object
-# compilation...
-SOURCE_DIRS = ./src
-SRC = $(foreach D,$(SOURCES),$(wildcard $(D)/*.c))   
-OBJ = $(patsubst %.c,%.o,$(SRC))   
 
 # Compile static library...
 $(STATIC): $(OBJ) $(VIWERR)
-	@echo "[Link (Static)]"
+	@$(PRINT) $(call PRINT_COLOR,$(PURPLE),[Link (Static)])
 	ar rcs $@ $(OBJ)
 
 # Compile objects...
 %.o: %.c $(VIWERR)
-	@echo [Compile] $<
+	@$(PRINT) $(call PRINT_COLOR,$(GREEN),- Compiling:) $<
 	@$(CC) -lm -c $(DFLAGS) $(CFLAGS) $< -o $@
 
 # Compile external error detection library...
 $(VIWERR):
-	@echo "---:VIWERR:---"
+	@$(PRINT) $(call PRINT_COLOR,$(PURPLE),"---:VIWERR:---")
 	make -C ext/viwerr
 
 # Cleanup...
 .PHONY: clean
 clean: 
-	@$(REMOVE)
+	@$(PRINT) $(call PRINT_COLOR,$(RED),[Deleting all objects libraries and executables])
+	$(REMOVE)
 
 # Create static library, and run test...
 .PHONY: test
 test: $(STATIC)
-	@echo "[Running test/test.c]"
+	@$(PRINT) $(call PRINT_COLOR,$(PURPLE),[Running test/test.c])
 	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) $(VIWERR)
 	@$(EXECUTE_TEST)
 
