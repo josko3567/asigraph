@@ -18,7 +18,7 @@
 bool agcurmove(agcoord_t coord) {
         
 #if defined(_WIN32) || defined(_WIN64)
-        if( !SetConsleCursorPosition(
+        if( !SetConsoleCursorPosition(
                 GetStdHandle(STD_OUTPUT_HANDLE),
                 (COORD){coord.x, coord.y}
         )) {

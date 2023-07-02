@@ -218,6 +218,7 @@ bool agtimer(
 		deltatime 
 	);
 
+}
 #else
 
 /*
