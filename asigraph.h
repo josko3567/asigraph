@@ -148,5 +148,16 @@ typedef struct agcont_st {
 uint64_t * __agframe_location(void);
 #define agframe (*__agframe_location())
 
+bool agcurmove(agcoord_t coord);
+
+bool agtimer( 
+	const double target_framerate, 
+	double *framerate, 
+	double *deltatime 
+);
+
+bool agsleep( 
+	const double sleeptime 
+);
 
 #endif /** @c ASIGRAPH_LIBRARY_INCLUDED */
