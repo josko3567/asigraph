@@ -196,7 +196,7 @@ void agcurhome(
  * @returns None.
  */
 void agcurhidden(
-    bool visible
+    bool hidden
 );
 
 /**

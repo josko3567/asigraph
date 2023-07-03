@@ -68,8 +68,8 @@ void agcurhidden(bool hidden) {
 	CursorInfo.bVisible = _visible;
 	SetConsoleCursorInfo(StdHandle, &CursorInfo);
 #else
-        if(visible) fprintf(stdout,"\x1b[?25l");
-        else fprintf(stdout,"\x1b[?25h");
+        if(hidden) fprintf(stdout,"\x1b[?25h");
+        else fprintf(stdout,"\x1b[?25l");
 #endif
 
 }

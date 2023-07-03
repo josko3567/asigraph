@@ -5,6 +5,11 @@
 
 int main(void) {
 	
+	atexit(aglambda(void, (void){
+		agcurhidden(false);
+		fprintf(stdout, "\x1b[2J");
+	}));
+
         double framerate, deltatime, target = 60.0;
         fprintf(stdout, "\x1b[2J");
         agcurhidden(true);
