@@ -145,6 +145,13 @@ typedef struct agcont_st {
 
 } agcont_t;
 
+struct agterm_st {
+
+	int todo;
+
+} agterm_t;
+
+
 uint64_t * __agframe_location(void);
 #define agframe (*__agframe_location())
 
@@ -232,11 +239,13 @@ void agcurhidden(
  * @throw Linux - nanosleep could possibly return EINTR for
  *                interrupts but errno is reset as EINTR is
  *                handled, other than that nothing special.
+ * @throw EINVAL - On both systems EINVAL is thrown if 
+ *                 target_framerate is less than 0.00.
  * 
- * @return Always will return true unless something really
- *         went down the gutter.
+ * @return If target_framerate < 0.00 returns -1, otherwise 0.
+ * 
  */
-bool agtimer( 
+int agtimer( 
 	const double target_framerate, 
 	double *framerate, 
 	double *deltatime 
@@ -253,15 +262,30 @@ bool agtimer(
  * 
  * @throw Windows - see agtimer(1)
  * @throw Linux - see agtimer(1)
+ * @throw EINVAL - If sleeptime is less than 0.00, EINVAL
+ *                 is thrown
  * 
- * @return Always will return true for Linux, for Windows it
- *         will return false if QueryPerformance fails, which
- *         it won't so it will return true for Windows always
- *         too.
+ * @return Returns -1 if sleeptime is less than 0.00, otherwise 0.
  */
-bool agsleep( 
+int agsleep( 
 	const double sleeptime 
 );
 
+// agterm_t __aginit() {
+
+// #if defined(_WIN32) || defined(_WIN64)
+// 	if(!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode)){
+// 		DWORD err = GetLastError();
+// 		printf("Last error = %d", err);
+// 		return 0;
+// 	}
+// 	if(!SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode | ENABLE_VIRTUAL_TERMINAL_INPUT)){
+// 		DWORD err = GetLastError();
+// 		printf("Last error = %d", err);
+// 		return 0;
+// 	}
+// #endif
+
+// }
 
 #endif /** @c ASIGRAPH_LIBRARY_INCLUDED */

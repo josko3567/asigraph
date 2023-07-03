@@ -4,7 +4,7 @@
 /* QueryPerformanceCounter & QueryPerformaceFrequency */
 #include <profileapi.h>
 
-static __inline__ bool asigraph_precise_sleep_win( 
+static __inline__ int asigraph_precise_sleep_win( 
 	const double sleeptime );
 static __inline__ double asigraph_timer_win_get_framerate(
 	LARGE_INTEGER freq,
@@ -14,7 +14,7 @@ static __inline__ double asigraph_timer_win_get_deltatime(
 	LARGE_INTEGER freq,
 	LARGE_INTEGER ct,
 	LARGE_INTEGER lt );
-static __inline__ bool asigraph_timer_win( 
+static __inline__ int asigraph_timer_win( 
 	const double target_framerate, 
 	double *framerate,
 	double *deltatime );
@@ -61,29 +61,23 @@ static __inline__ double asigraph_timer_win_get_framerate(
  * Windows machine precision sleep
  * with QueryPerformanceCounter.
  */
-static __inline__ bool asigraph_precise_sleep_win( 
+static __inline__ int asigraph_precise_sleep_win( 
 	const double sleeptime )
 {
 
 	LARGE_INTEGER freq, start, time;
-	if( !QueryPerformanceFrequency(&freq) ) return false;
-	if( !QueryPerformanceCounter(&start) ) return false;
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&start);
 	
-	while( true ){
+	while( 1 ){
 		
-		if( !QueryPerformanceCounter( &time ) ) {
-
-			return false;
-
-		} if( asigraph_timer_win_get_deltatime( 
-			freq, time, start ) > sleeptime ) {
-			
-			return true;
-			
-		}
+		QueryPerformanceCounter( &time );
+		if( asigraph_timer_win_get_deltatime( 
+		freq, time, start ) > sleeptime )
+			break;
 		
 	}
-	return false;
+	return 0;
 
 }
 
@@ -91,7 +85,7 @@ static __inline__ bool asigraph_precise_sleep_win(
  * Precise sleep function defined for windows.
  */
 
-bool agsleep( 
+int agsleep( 
 	const double sleeptime )
 {
 
@@ -99,7 +93,7 @@ bool agsleep(
 
 		// matica_stderr.lin.set( EINVAL );
 		errno = EINVAL;
-		return false;
+		return -1;
 
 	}
 
@@ -113,7 +107,7 @@ bool agsleep(
  * Inserting 0.0 to target_framerate 
  * sets the cap to infinite.
  */
-static __inline__ bool asigraph_timer_win( 
+static __inline__ int asigraph_timer_win( 
 	const double target_framerate, 
 	double *framerate, 
 	double *deltatime )
@@ -127,10 +121,8 @@ static __inline__ bool asigraph_timer_win(
 	
 	if( startup ){
 		
-		if( QueryPerformanceFrequency( &freq ) == false )
-			goto exit_err;
-		if( QueryPerformanceCounter( &ct ) == false )
-			goto exit_err;
+		QueryPerformanceFrequency( &freq );
+		QueryPerformanceCounter( &ct );
 		startup = false;
 		goto exit_true;
 
@@ -138,8 +130,7 @@ static __inline__ bool asigraph_timer_win(
 
 	/* write current time to last time and update current time */
 	lt = ct;
-	if( QueryPerformanceCounter( &ct ) == false )
-		goto exit_err;
+	QueryPerformanceCounter( &ct );
 	curfr = asigraph_timer_win_get_framerate( 
 		freq, ct, lt );
 	curdt = asigraph_timer_win_get_deltatime( 
@@ -148,8 +139,7 @@ static __inline__ bool asigraph_timer_win(
 	/* No framerate cap */
 	if( target_framerate == 0.000 ){
 
-		if( QueryPerformanceCounter( &ct ) == false ) 
-			goto exit_err;
+		QueryPerformanceCounter( &ct );
 		curfr = asigraph_timer_win_get_framerate( 
 			freq, ct, lt );
 		curdt = asigraph_timer_win_get_deltatime( 
@@ -163,10 +153,10 @@ static __inline__ bool asigraph_timer_win(
 	/* Sleep through the remainder of the frame */
 	if( target_framerate < curfr ){
 		
-		agsleep( 1.0/target_framerate - curdt );
+		double sleeptime = 1.0/target_framerate - curdt;
+		agsleep( sleeptime < 0.000 ? 0.000 : sleeptime );
 
-		if( QueryPerformanceCounter( &ct ) == false ) 
-			goto exit_err;
+		QueryPerformanceCounter( &ct );
 		curfr = asigraph_timer_win_get_framerate( 
 			freq, ct, lt );
 		curdt = asigraph_timer_win_get_deltatime( 
@@ -176,12 +166,10 @@ static __inline__ bool asigraph_timer_win(
 
 	if( framerate ) *framerate = curfr;
 	if( deltatime ) *deltatime = curdt;
-	/* Exit success */
-exit_true:
-	return true;
 
-exit_err:
-	return false;
+/* Exit success */
+exit_true:
+	return 0;
 
 }
 
@@ -199,7 +187,7 @@ exit_err:
  * Returns framerate and deltatime to *framerate
  * and *deltatime unless they are NULL.
  */
-bool agtimer( 
+int agtimer( 
 	const double target_framerate, 
 	double *framerate, 
 	double *deltatime ){
@@ -208,7 +196,7 @@ bool agtimer(
 
 		// matica_stderr.lin.set( EINVAL );
 		errno = EINVAL;
-		return false;
+		return -1;
 
 	}
 
@@ -245,7 +233,7 @@ and ASIGRAPH_TIMER_LINUX_NS_REF_LF */
 
 static __inline__ struct timespec asigraph_precise_sleep_linux_conv( 
 	double sleeptime );
-static __inline__ bool asigraph_precise_sleep_linux( 
+static __inline__ int asigraph_precise_sleep_linux( 
 	const double sleeptime );
 static __inline__ int asigraph_timer_linux_update_time( 
 	struct timespec * __restrict ct, 
@@ -257,7 +245,7 @@ static __inline__ double    asigraph_timer_linux_getfr_ns(
 	const long long elapsed );
 static __inline__ double    asigraph_timer_linux_getdt_ns( 
 	const long long elapsed );
-static __inline__ bool      asigraph_timer_linux( 
+static __inline__ int      asigraph_timer_linux( 
 	const double target_framerate, 
 	double *framerate, 
 	double *deltatime );
@@ -298,18 +286,15 @@ static __inline__ bool asigraph_precise_sleep_linux_ts(
 		ts_remain.tv_sec = 0;
 		ts_remain.tv_nsec = 0;
 
-	while( nanosleep( &ts_sleep_time, &ts_remain ) == -1 ) {
-
-		if( errno == EINTR ) {
+	while( 1 ) {
+		
+		int ret = nanosleep( &ts_sleep_time, &ts_remain );
+		if( ret == -1 && errno == EINTR ) {
 			/* Interruption occured, write ts_remain into 
 			   ts_sleep_time and continue */
 			ts_sleep_time.tv_sec = ts_remain.tv_sec;
 			ts_sleep_time.tv_nsec = ts_remain.tv_nsec;
 			continue; 
-
-		} else if( errno != 0 ) { 
-			/* Error occured */
-			return false;
 
 		} else {
 
@@ -318,7 +303,7 @@ static __inline__ bool asigraph_precise_sleep_linux_ts(
 		}
 
 	}
-	return true;
+	return 0;
 
 }
 
@@ -336,26 +321,24 @@ static __inline__ bool asigraph_precise_sleep_linux(
 		ts_remain.tv_sec = 0;
 		ts_remain.tv_nsec = 0;
 
-	errno = 0;
-
-	while( nanosleep( &ts_sleep_time, &ts_remain ) == -1 ) {
-
-		if( errno == EINTR ) {
+	while( 1 ) {
+		
+		int ret = nanosleep( &ts_sleep_time, &ts_remain );
+		if( ret == -1 && errno == EINTR ) {
 			/* Interruption occured, write ts_remain into 
 			   ts_sleep_time and continue */
 			ts_sleep_time.tv_sec = ts_remain.tv_sec;
 			ts_sleep_time.tv_nsec = ts_remain.tv_nsec;
-			errno = 0;
 			continue; 
 
 		} else {
-			
+
 			break;
 
 		}
 
 	}
-	return true;
+	return 0;
 
 }
 
@@ -363,7 +346,7 @@ static __inline__ bool asigraph_precise_sleep_linux(
  * Precise sleep function defined for linux.
  */
 
-bool agsleep( 
+int agsleep( 
 	const double sleeptime )
 {
 
@@ -371,7 +354,7 @@ bool agsleep(
 
 		// matica_stderr.lin.set( EINVAL );
 		errno = EINVAL;
-		return false;
+		return -1;
 
 	}
 
@@ -381,6 +364,7 @@ bool agsleep(
 
 /*
  * Write timespec struct ct into lt and update ct.
+ * Always returns 0
  */
 int asigraph_timer_linux_update_time( 
 	struct timespec * __restrict ct, 
@@ -461,15 +445,13 @@ static __inline__ bool asigraph_timer_linux(
 	/* Get current time on first call and leave */
 	if( startup ){
 
-		if( clock_gettime( CLOCK_MONOTONIC, &ct ) == -1 ) 
-			goto exit_err;
+		clock_gettime( CLOCK_MONOTONIC, &ct );
 		startup = false;
 		goto exit_true;
 		
 	}
 
-	if( asigraph_timer_linux_update_time( &ct, &lt ) == -1 ) 
-		goto exit_err;
+	asigraph_timer_linux_update_time( &ct, &lt );
 	elapsed = asigraph_timer_linux_elapsed_ns( ct, lt );
 	curfr = asigraph_timer_linux_getfr_ns( elapsed );
 	curdt = asigraph_timer_linux_getdt_ns( elapsed );
@@ -484,11 +466,9 @@ static __inline__ bool asigraph_timer_linux(
 		
 	} else if( target_framerate < curfr ){
 		
-		if( agsleep( 1.0/target_framerate - curdt )
-			== 0 ) 
-			goto exit_err;
-		if( clock_gettime( CLOCK_MONOTONIC, &ct ) == -1 ) 
-			goto exit_err;
+		double sleeptime = 1.0/target_framerate - curdt;
+		agsleep( sleeptime < 0.000 ? 0.000 : sleeptime )
+		clock_gettime( CLOCK_MONOTONIC, &ct )
 		elapsed = asigraph_timer_linux_elapsed_ns( ct, lt );
 		curfr = asigraph_timer_linux_getfr_ns( elapsed );
 		curdt = asigraph_timer_linux_getdt_ns( elapsed );
@@ -500,8 +480,6 @@ static __inline__ bool asigraph_timer_linux(
 
 exit_true:
 	return true;
-exit_err:
-	return false;
 
 }
 
@@ -509,7 +487,7 @@ exit_err:
  * Timer function defined for linux.
  */
 
-bool agtimer( 
+int agtimer( 
 	const double target_framerate, 
 	double *framerate, 
 	double *deltatime )
@@ -520,7 +498,7 @@ bool agtimer(
 
 		// matica_stderr.lin.set( EINVAL );
 		errno = EINVAL;
-		return false;
+		return -1;
 
 	}
 	// target_framerate+=1.0;
