@@ -16,7 +16,7 @@
 void agcurmove(agcoord_t coord) {
         
 #if defined(_WIN32) || defined(_WIN64)
-        SetConsleCursorPosition(
+        SetConsoleCursorPosition(
                 GetStdHandle(STD_OUTPUT_HANDLE),
                 (COORD){coord.x, coord.y}
         );
@@ -35,7 +35,7 @@ void agcurmove(agcoord_t coord) {
 void agcurhome(void) {
 
 #if defined(_WIN32) || defined(_WIN64)
-        SetConsleCursorPosition(
+        SetConsoleCursorPosition(
                 GetStdHandle(STD_OUTPUT_HANDLE),
                 (COORD){0, 0}
         );
@@ -55,7 +55,7 @@ void agcurhidden(bool visible) {
 
 #if defined(_WIN32) || defined(_WIN64)
  	CONSOLE_CURSOR_INFO CursorInfo;
-        GetCursorInfo(&CursorInfo);
+        GetCursorInfo((PCURSORINFO)&CursorInfo);
 
 	CursorInfo.bVisible = visible;
 	SetConsoleCursorInfo(
