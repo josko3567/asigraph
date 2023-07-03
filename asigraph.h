@@ -145,13 +145,16 @@ typedef struct agcont_st {
 
 } agcont_t;
 
-struct agterm_st {
+typedef struct agterm_st {
 
-	int todo;
+	int a;
+	int b;
+	int c;
 
 } agterm_t;
 
 
+// agterm_t
 uint64_t * __agframe_location(void);
 #define agframe (*__agframe_location())
 

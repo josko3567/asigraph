@@ -278,7 +278,7 @@ static __inline__ struct timespec asigraph_precise_sleep_linux_conv(
  * Precise sleep for linux machine
  * now given in timespec
  */
-static __inline__ bool asigraph_precise_sleep_linux_ts( 
+static __inline__ int asigraph_precise_sleep_linux_ts( 
 	struct timespec ts_sleep_time )
 {
 
@@ -311,7 +311,7 @@ static __inline__ bool asigraph_precise_sleep_linux_ts(
  * Linux machine precision sleep
  * with nanosleep.
  */
-static __inline__ bool asigraph_precise_sleep_linux( 
+static __inline__ int asigraph_precise_sleep_linux( 
 	const double sleeptime )
 {
 
@@ -429,7 +429,7 @@ static __inline__ double asigraph_timer_linux_getdt_ns(
  * success, otherwise 0
  * Optional returns framerate and delatime.
  */
-static __inline__ bool asigraph_timer_linux( 
+static __inline__ int asigraph_timer_linux( 
 	const double target_framerate, 
 	double *framerate, 
 	double *deltatime )
@@ -467,8 +467,8 @@ static __inline__ bool asigraph_timer_linux(
 	} else if( target_framerate < curfr ){
 		
 		double sleeptime = 1.0/target_framerate - curdt;
-		agsleep( sleeptime < 0.000 ? 0.000 : sleeptime )
-		clock_gettime( CLOCK_MONOTONIC, &ct )
+		agsleep( sleeptime < 0.000 ? 0.000 : sleeptime );
+		clock_gettime( CLOCK_MONOTONIC, &ct );
 		elapsed = asigraph_timer_linux_elapsed_ns( ct, lt );
 		curfr = asigraph_timer_linux_getfr_ns( elapsed );
 		curdt = asigraph_timer_linux_getdt_ns( elapsed );
@@ -479,7 +479,7 @@ static __inline__ bool asigraph_timer_linux(
 	if( deltatime ) *deltatime = curdt;
 
 exit_true:
-	return true;
+	return 0;
 
 }
 
