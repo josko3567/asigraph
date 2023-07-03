@@ -148,16 +148,120 @@ typedef struct agcont_st {
 uint64_t * __agframe_location(void);
 #define agframe (*__agframe_location())
 
-bool agcurmove(agcoord_t coord);
+/**
+ * @fn @c agcurmove(1)
+ * 
+ * @brief 
+ * Move console cursor to @c coord's position.
+ * 
+ * @param coord
+ *        (x,y) position to move the cursor to.
+ * 
+ * @throw Possible error return for Windows SetConsoleCursorPosition.
+ *        Which is 99.9999999999999% never going to throw anything
+ *        unless your install of Windows is fucked.
+ * 
+ * @returns Nothing.
+ */
+void agcurmove(
+    agcoord_t coord
+);
 
+/**
+ * @fn @c agcurhome(0)
+ * 
+ * @brief 
+ * Move console cursor to (0, 0) position.
+ * 
+ * @throw Windows - Read agcurmove(1)
+ * @throw Linux - None.
+ * 
+ * @returns Nothing.
+ */
+void agcurhome(
+    void
+);
+
+/**
+ * @fn @c agcurhidden(1)
+ * 
+ * @brief 
+ * Toggle cursor visibility.
+ * 
+ * @throw Windows - Read agcurmove(1) but replace
+ *                  SetConsoleCursorPosition with GetCursorInfo
+ *                  & SetCursorInfo.
+ * @throw Linux - None.
+ * 
+ * @returns None.
+ */
+void agcurhidden(
+    bool visible
+);
+
+/**
+ * @fn @c agtimer(3)
+ * 
+ * @brief
+ * agtimer() is used for maintaining a constant framerate.
+ * The first call to the function only sets the last time
+ * it was called. After that it gets the last time it was
+ * called and the current time and checks how much it has
+ * to sleep to achieve the target framerate.
+ * 
+ * Put it in a while loop and it will be work.
+ * 
+ * @param target_framerate
+ *        Target framerate we are trying to achieve, the frame
+ *        needs to last 1/target_framerate seconds so we sleep
+ *        for the remainder of the unused processing time unless
+ *        the time to process the frame was longer than
+ *        1/target_framerate.
+ * 
+ * @param framerate
+ *        Address of a double where the actual framerate
+ *        is written. For no return pass NULL.
+ * 
+ * 
+ * @param deltatime
+ *        Address of a double where deltatime is written.
+ *        For no return pass NULL.
+ * 
+ * @throw Windows - Possible QueryPerformance errors, see
+ *                  agcurmove(1) for what i think on that.
+ * @throw Linux - nanosleep could possibly return EINTR for
+ *                interrupts but errno is reset as EINTR is
+ *                handled, other than that nothing special.
+ * 
+ * @return Always will return true unless something really
+ *         went down the gutter.
+ */
 bool agtimer( 
 	const double target_framerate, 
 	double *framerate, 
 	double *deltatime 
 );
 
+/**
+ * @fn @c agsleep(1)
+ * 
+ * @brief 
+ * Sleep for a precise amount of time.
+ * 
+ * @param sleeptime
+ *        The amount of time to sleep written in a double.
+ * 
+ * @throw Windows - see agtimer(1)
+ * @throw Linux - see agtimer(1)
+ * 
+ * @return Always will return true for Linux, for Windows it
+ *         will return false if QueryPerformance fails, which
+ *         it won't so it will return true for Windows always
+ *         too.
+ */
 bool agsleep( 
 	const double sleeptime 
 );
+
 
 #endif /** @c ASIGRAPH_LIBRARY_INCLUDED */

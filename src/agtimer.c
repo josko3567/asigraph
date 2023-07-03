@@ -335,6 +335,8 @@ static __inline__ bool asigraph_precise_sleep_linux(
 		ts_remain.tv_sec = 0;
 		ts_remain.tv_nsec = 0;
 
+	errno = 0;
+
 	while( nanosleep( &ts_sleep_time, &ts_remain ) == -1 ) {
 
 		if( errno == EINTR ) {
@@ -342,14 +344,11 @@ static __inline__ bool asigraph_precise_sleep_linux(
 			   ts_sleep_time and continue */
 			ts_sleep_time.tv_sec = ts_remain.tv_sec;
 			ts_sleep_time.tv_nsec = ts_remain.tv_nsec;
+			errno = 0;
 			continue; 
 
-		} else if( errno != 0 ) { 
-			/* Error occured */
-			return false;
-
 		} else {
-
+			
 			break;
 
 		}

@@ -5,8 +5,6 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #include <winerror.h>
-#else
-
 #endif
 
 /**
@@ -15,20 +13,58 @@
  * @brief 
  * Move console cursor to @c coord's position.
  */
-bool agcurmove(agcoord_t coord) {
+void agcurmove(agcoord_t coord) {
         
 #if defined(_WIN32) || defined(_WIN64)
-        if( !SetConsleCursorPosition(
+        SetConsleCursorPosition(
                 GetStdHandle(STD_OUTPUT_HANDLE),
                 (COORD){coord.x, coord.y}
-        )) {
-                return false;
-        }
-        return true;
+        );
 #else
         fprintf(stdout, "\x1b[%d;%dH", coord.y, coord.x);
-        return true;
 #endif
 
+}
+
+/**
+ * @fn @c agcurhome(0)
+ * 
+ * @brief 
+ * Move console cursor to (0, 0) position.
+ */
+void agcurhome(void) {
+
+#if defined(_WIN32) || defined(_WIN64)
+        SetConsleCursorPosition(
+                GetStdHandle(STD_OUTPUT_HANDLE),
+                (COORD){0, 0}
+        );
+#else
+        fprintf(stdout, "\x1b[H");
+#endif
+
+}
+
+/**
+ * @fn @c agcurhidden(1)
+ * 
+ * @brief 
+ * Toggle cursor visibility.
+ */
+void agcurhidden(bool visible) {
+
+#if defined(_WIN32) || defined(_WIN64)
+ 	CONSOLE_CURSOR_INFO CursorInfo;
+        GetCursorInfo(&CursorInfo);
+
+	CursorInfo.bVisible = visible;
+	SetConsoleCursorInfo(
+                GetStdHandle(STD_OUTPUT_HANDLE), 
+                &CursorInfo
+        );
+#else
+        if(visible) fprintf(stdout,"\x1b[?25l");
+        else fprintf(stdout,"\x1b[?25h");
+#endif
 
 }
