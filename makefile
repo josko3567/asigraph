@@ -46,7 +46,6 @@ CFLAGS = -Wall -Wextra -Wpedantic \
 	 -Wredundant-decls -Wnested-externs -Wmissing-include-dirs \
 	 -pipe -std=gnu2x
 
-
 # Printing setup
 PRINT_COLOR =
 PRINT =
@@ -80,6 +79,8 @@ OBJ = $(patsubst %.c,%.o,$(SRC))
 # Setup static suffix, executable suffix and cleanup functionality
 # on OS basis...
 REMOVE =
+# Linux only argument needed to compile with lambdas.
+EXECSTACK =
 ifeq ($(OS),Windows_NT)
     EXECUTE_TEST := $(addsuffix .exe, $(EXECUTE_TEST))
     STATIC := $(addsuffix .lib, $(STATIC))
@@ -88,6 +89,7 @@ else
     EXECUTE_TEST := $(addsuffix .out, $(EXECUTE_TEST))
     STATIC := $(addsuffix .a, $(STATIC))
     REMOVE = rm -f $(OBJ) $(STATIC) $(EXECUTE_TEST)
+    EXECSTACK = -z execstack
 endif
 
 # Compile static library...
@@ -115,7 +117,7 @@ clean:
 .PHONY: test
 test: $(STATIC)
 	@$(PRINT) $(call PRINT_COLOR,$(PURPLE),[Running test/test.c])
-	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) $(VIWERR)
+	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) $(VIWERR) $(EXECSTACK)
 	@$(EXECUTE_TEST)
 
 # Clean then test...
