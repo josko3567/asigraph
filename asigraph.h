@@ -91,17 +91,6 @@
 
 #define AG_CONTAINER_NAME_SIZE 256
 
-/**
- * @brief 
- * GNU C lambdas using the anonymous function __fn__ 
- * and ({ })
- */
-#define aglambda(returns, fn) \
-({                            \
-    returns __fn__ fn         \
-    __fn__;                   \
-})
-
 typedef struct agside_st {
 
     uint32_t (*position)(

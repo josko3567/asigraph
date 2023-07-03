@@ -2,13 +2,19 @@
 #include <errno.h>
 #if defined(_WIN32) || defined(_WIN64)
 #include <Windows.h>
+#else
+#include <sys/prctl.h>
 #endif
+
 #include "../asigraph.h"
 #include "../ext/viwerr/viwerr.h"
 
+void foo(void (*bar)(void)) {
+        bar();
+}
+
 int main(void) {
 	
-	// HANDLE hndl = GetStdHandle(STD_OUTPUT_HANDLE);
 #if defined(_WIN32) || defined(_WIN64)
 	DWORD mode;
 	if(!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode)){
@@ -27,12 +33,6 @@ int main(void) {
 	SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 #endif
 
-	// atexit(aglambda(void, (void){
-	// 	agcurhidden(false);
-	// 	// fprintf(stdout, "\x1b[2J");
-	// 	puts("\e[?1049l");
-	// }));
-
         double framerate, deltatime, target = 60.0;
 	puts("\x1b[?1049h");
         agcurhidden(true);
@@ -50,6 +50,9 @@ int main(void) {
         }
 	puts("\e[?1049l");
         agcurhidden(false);
+
+        // printf("6+6=%d\n",add(6,6));
+
         return 0;
 
 }

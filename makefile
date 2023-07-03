@@ -39,12 +39,16 @@ VIWERR = ext/viwerr/viwerr
 EXECUTE_TEST = ./test/a
 # Compiler...
 CC = gcc
+# C standard...
+STD = gnu2x
 # Compiler flags...
 CFLAGS = -Wall -Wextra -Wpedantic \
 	 -Wformat=2 -Wno-unused-parameter -Wshadow \
 	 -Wwrite-strings -Wstrict-prototypes -Wold-style-definition \
 	 -Wredundant-decls -Wnested-externs -Wmissing-include-dirs \
-	 -pipe -std=gnu2x
+	 -pipe -std=$(STD)
+CFLAGSTEST = 
+
 
 # Printing setup
 PRINT_COLOR =
@@ -79,8 +83,6 @@ OBJ = $(patsubst %.c,%.o,$(SRC))
 # Setup static suffix, executable suffix and cleanup functionality
 # on OS basis...
 REMOVE =
-# Linux only argument needed to compile with lambdas.
-EXECSTACK =
 ifeq ($(OS),Windows_NT)
     EXECUTE_TEST := $(addsuffix .exe, $(EXECUTE_TEST))
     STATIC := $(addsuffix .lib, $(STATIC))
@@ -89,7 +91,6 @@ else
     EXECUTE_TEST := $(addsuffix .out, $(EXECUTE_TEST))
     STATIC := $(addsuffix .a, $(STATIC))
     REMOVE = rm -f $(OBJ) $(STATIC) $(EXECUTE_TEST)
-    EXECSTACK = -z execstack
 endif
 
 # Compile static library...
@@ -117,7 +118,7 @@ clean:
 .PHONY: test
 test: $(STATIC)
 	@$(PRINT) $(call PRINT_COLOR,$(PURPLE),[Running test/test.c])
-	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) $(VIWERR) $(EXECSTACK)
+	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) $(VIWERR) -std=$(STD) $(CFLAGSTEST)
 	@$(EXECUTE_TEST)
 
 # Clean then test...
