@@ -278,7 +278,8 @@ static __inline__ struct timespec asigraph_precise_sleep_linux_conv(
  * Precise sleep for linux machine
  * now given in timespec
  */
-static __inline__ int asigraph_precise_sleep_linux_ts( 
+static __inline__ 
+int asigraph_precise_sleep_linux_ts( 
 	struct timespec ts_sleep_time )
 {
 

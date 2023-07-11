@@ -38,7 +38,7 @@ VIWERR = ext/viwerr/viwerr
 # Test path...
 EXECUTE_TEST = ./test/a
 # Compiler...
-CC = gcc
+CC = clang
 # C standard...
 STD = gnu2x
 # Compiler flags...
@@ -46,8 +46,8 @@ CFLAGS = -Wall -Wextra -Wpedantic \
 	 -Wformat=2 -Wno-unused-parameter -Wshadow \
 	 -Wwrite-strings -Wstrict-prototypes -Wold-style-definition \
 	 -Wredundant-decls -Wnested-externs -Wmissing-include-dirs \
-	 -pipe -std=$(STD)
-CFLAGSTEST = 
+	 -pipe -std=$(STD) -fblocks -Wno-unused-command-line-argument
+CFLAGSTEST = -fblocks -lBlocksRuntime
 
 
 # Printing setup
@@ -118,7 +118,7 @@ clean:
 .PHONY: test
 test: $(STATIC)
 	@$(PRINT) $(call PRINT_COLOR,$(PURPLE),[Running test/test.c])
-	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) $(VIWERR) -std=$(STD) $(CFLAGSTEST)
+	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) $(VIWERR) -std=$(STD) $(CFLAGSTEST) 
 	@$(EXECUTE_TEST)
 
 # Clean then test...

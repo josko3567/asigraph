@@ -55,23 +55,7 @@ void agcurhome(void) {
  */
 void agcurhidden(bool hidden) {
 
-// #if defined(_WIN32) || defined(_WIN64)
-//  	CONSOLE_CURSOR_INFO CursorInfo;
-// 	HANDLE StdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-// 	bool _visible = hidden ? false : true;
-	
-// 	if(!GetConsoleCursorInfo(StdHandle, &CursorInfo)){
-// 		// CursorInfo = (CONSOLE_CURSOR_INFO){
-// 		// 	.bVisible = _visible,
-// 		// 	.dwSize = 100
-// 		// };
-// 	}
-
-// 	CursorInfo.bVisible = _visible;
-// 	SetConsoleCursorInfo(StdHandle, &CursorInfo);
-// #else
         if(hidden) fprintf(stdout,"\x1b[?25l");
         else fprintf(stdout,"\x1b[?25h");
-// #endif
 
 }

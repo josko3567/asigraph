@@ -56,15 +56,22 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <wchar.h>
+#include <stdbool.h>
 
+#include "agansicode.h"
 #ifdef AG_DEV
 #include "ext/viwerr/viwerr.h"
 #endif
 
 #ifndef ASIGRAPH_LIBRARY_INCLUDED
 #define ASIGRAPH_LIBRARY_INCLUDED
+
+/**
+ * @brief 
+ * Exit code for aginit()
+ */
+#define AG_EXIT_CODE 79
 
 #ifndef AG_TAB_SIZE
 /**
@@ -89,11 +96,34 @@
  */
 #define AG_CONSOLE_MIN_Y 1
 
+/**
+ * @brief 
+ * Max name size.
+ */
 #define AG_CONTAINER_NAME_SIZE 256
+
+/**
+ * @brief 
+ * Screen buffer enums you can swap between with 
+ * for agbuffer(1)
+ */
+typedef enum agtermbuffer_t {
+
+    AG_MAIN_BUFFER,
+    AG_ALT_BUFFER
+
+} agtermbuffer_t;
+
+typedef struct agcoord_st {
+
+    uint16_t x;
+    uint16_t y;
+
+} agcoord_t;
 
 typedef struct agside_st {
 
-    uint32_t (*position)(
+    uint32_t (^position)(
         uint32_t analogside, 
         uint32_t _max
     );
@@ -106,13 +136,6 @@ typedef struct agside_st {
     uint32_t __padding;
 
 } agside_t;
-
-typedef struct agcoord_st {
-
-    uint16_t x;
-    uint16_t y;
-
-} agcoord_t;
 
 typedef struct agcont_st {
 
@@ -134,16 +157,24 @@ typedef struct agcont_st {
 
 } agcont_t;
 
+typedef struct agwin_st {
+
+    uint32_t width;
+    uint32_t lenght;
+
+    agcoord_t position;
+
+} agwin_t;
+
 typedef struct agterm_st {
 
-	int a;
-	int b;
-	int c;
+	uint16_t rows;
+    uint16_t columns;
+
+    agwin_t window;
 
 } agterm_t;
 
-
-// agterm_t
 uint64_t * __agframe_location(void);
 #define agframe (*__agframe_location())
 
@@ -263,21 +294,39 @@ int agsleep(
 	const double sleeptime 
 );
 
-// agterm_t __aginit() {
+/**
+ * @fn @c agtermbuffer(1)
+ * 
+ * @brief 
+ * Swap between main and alternative buffer.
+ * agtermbuffer_t accepts AG_MAIN_BUFFER or AG_ALT_BUFFER.
+ * 
+ * @param buffer 
+ *        What buffer to switch to.
+ * 
+ * @throw Windows - None.
+ * @throw Linux - None.
+ * 
+ * @returns None.
+ */
+void agtermbuffer(
+    agtermbuffer_t buffer
+);
 
-// #if defined(_WIN32) || defined(_WIN64)
-// 	if(!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode)){
-// 		DWORD err = GetLastError();
-// 		printf("Last error = %d", err);
-// 		return 0;
-// 	}
-// 	if(!SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode | ENABLE_VIRTUAL_TERMINAL_INPUT)){
-// 		DWORD err = GetLastError();
-// 		printf("Last error = %d", err);
-// 		return 0;
-// 	}
-// #endif
+/**
+ * @fn @c aginit(0)
+ * 
+ * @brief 
+ * Initialize terminal for use with asigraph.h
+ * 
+ * @throw Windows, Linux - can exit with code AG_EXIT_CODE if 
+ *                         the function fails to initialize the terminal.
+ * 
+ * @returns None.
+ */
+__attribute__ ((constructor)) void aginit(void);
 
-// }
+void agexithandle(void);
 
-#endif /** @c ASIGRAPH_LIBRARY_INCLUDED */
+
+#endif /** @c ASIGRAPH_LIBRARY_INCLUDED */ 
