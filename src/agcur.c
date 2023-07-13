@@ -2,11 +2,6 @@
 #include <stdbool.h>
 #include "../asigraph.h"
 
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-#include <winerror.h>
-#endif
-
 /**
  * @fn @c agcurmove(1)
  * 
@@ -15,14 +10,7 @@
  */
 void agcurmove(agcoord_t coord) {
         
-#if defined(_WIN32) || defined(_WIN64)
-        SetConsoleCursorPosition(
-                GetStdHandle(STD_OUTPUT_HANDLE),
-                (COORD){coord.x, coord.y}
-        );
-#else
         fprintf(stdout, "\x1b[%d;%dH", coord.y, coord.x);
-#endif
 
 }
 
@@ -36,14 +24,7 @@ void agcurmove(agcoord_t coord) {
  */
 void agcurhome(void) {
 
-#if defined(_WIN32) || defined(_WIN64)
-        SetConsoleCursorPosition(
-                GetStdHandle(STD_OUTPUT_HANDLE),
-                (COORD){0, 0}
-        );
-#else
         fprintf(stdout, "\x1b[H");
-#endif
 
 }
 

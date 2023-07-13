@@ -1,4 +1,5 @@
-/** INSCRIBING: *******************************************
+/**
+ >> INSCRIBING: >-----------------------------------------<
  * 
  *  > PROJECT: @b ASigraph
  * 
@@ -8,14 +9,14 @@
  * 
  *  > DOC: 30.6.2023.
  * 
- ** INTRODUCTION: *****************************************
+ >> INTRODUCTION: >---------------------------------------<
  * 
  *  ASigraph is a cross-platform console/terminal 
  *  "graphics" library. This will be a library mostly for
  *  creating GUI's but making console games is plausible 
  *  to.
  * 
- ** COMPATIBILITY: ****************************************
+ >> COMPATIBILITY: >--------------------------------------<
  *   
  *  > C:                                                   
  *  This library is written in compliance to the limited  
@@ -28,7 +29,7 @@
  *  any compatibility version of the POSIX standard that is
  *  deemed to work through trial and error.               
  * 
- ** LICENSE: @c LGPLv2 ************************************
+ >> LICENSE: @c LGPLv2 >----------------------------------<
  * 
  *  This file is part of Project ASigraph, a library for 
  *  cross-platform console/terminal graphics.
@@ -52,7 +53,7 @@
  *  51 Franklin Street, Fifth Floor,  Boston, 
  *  MA  02110-1301  USA
  * 
- **********************************************************/
+ << >--------------------------------------------------< */
 
 #include <stdio.h>
 #include <stdint.h>
@@ -63,6 +64,12 @@
 #ifdef AG_DEV
 #include "ext/viwerr/viwerr.h"
 #endif
+
+#ifndef __BLOCKS__
+#error must be compiled with -fblocks option enabled
+#endif
+
+// #include "ext/Block.h"
 
 #ifndef ASIGRAPH_LIBRARY_INCLUDED
 #define ASIGRAPH_LIBRARY_INCLUDED
@@ -107,12 +114,12 @@
  * Screen buffer enums you can swap between with 
  * for agbuffer(1)
  */
-typedef enum agtermbuffer_t {
+typedef enum agtermbuffer_em {
 
     AG_MAIN_BUFFER,
     AG_ALT_BUFFER
 
-} agtermbuffer_t;
+} agtermbuffer_em;
 
 typedef struct agcoord_st {
 
@@ -310,23 +317,91 @@ int agsleep(
  * @returns None.
  */
 void agtermbuffer(
-    agtermbuffer_t buffer
+    agtermbuffer_em buffer
 );
 
+typedef struct aginit_arg {
+
+    void (*initializer)(void);
+    struct {
+        void (*abnormal)(int);
+        void (*normal)(void);
+    } handler;
+
+} aginit_arg;
+
 /**
- * @fn @c aginit(0)
+ * @fn @c aginit(1)
  * 
  * @brief 
- * Initialize terminal for use with asigraph.h
+ * Initialize terminal for use with asigraph.h.
+ * 
+ * @param aginit
+ * 
+ *        @tparam @a handler.abnormal
+ *        Abnormal program exit handler. Accepts a pointer to a
+ *        function that returns nothing and
+ *        accepts a integer value. This value is a signal that
+ *        can be one of the following values:
+ *        SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGSEGV, SIGILL
+ *        & SIGHUP.
+ *        SIGILL & SIGSEGV are here because they normally abort
+ *        the program.
+ *        The function will be executed when any of these signals
+ *        are set aka. on abnormal exit.
+ *        These functions must use abort() to leave the program
+ *        to not call the @a handler.normal function by accident.
+ * 
+ *        @tparam @a handler.normal
+ *        Normal program exit handler. Accepts a pointer to a
+ *        function that returns and accepts nothing.
+ *        Do not call exit() within the @a handler.normal as it
+ *        is undefined behaviour due to @a handler.normal being
+ *        passed to atexit().
+ *        
+ * 
  * 
  * @throw Windows, Linux - can exit with code AG_EXIT_CODE if 
  *                         the function fails to initialize the terminal.
  * 
  * @returns None.
  */
-__attribute__ ((constructor)) void aginit(void);
+void aginit(
+    aginit_arg arg
+);
 
-void agexithandle(void);
+/**
+ * @fn @c __aginitializer_default(0)
+ * 
+ * @brief 
+ * Default initializer that aginit(1) uses.
+ * The default initialization is disabling the cursor visibility
+ * and terminal echo and changing the buffer to AG_ALT_BUFFER.
+ *
+ * @throw Windows, Linux - None.
+ * 
+ * @returns None.
+ */
+void __aginitializer_default(void);
 
+/**
+ * @fn @c agexhndladd
+ * 
+ * 
+ * @brief
+ * Add a new function that handles all screen exits.
+ * This function is used inside of 
+ */
+void agexhndladd(
+    void (*sigfunc)(int),
+    void (*atexitfunc)(void)
+);
+
+void __agexhndl_abnormal(int signal);
+void __agexhndl_normal(void);
+int * __agexhndl_signal(void);
+#define agexhndlsig (*__agexhndl_signal())
+
+int agtermecho(bool echo);
 
 #endif /** @c ASIGRAPH_LIBRARY_INCLUDED */ 
