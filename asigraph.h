@@ -64,6 +64,7 @@
 #include <stdint.h>
 #include <wchar.h>
 #include <stdbool.h>
+#include <signal.h>
 
 #define NCURSES_WIDECHAR 1
 #include <ncursesw/ncurses.h>
@@ -471,12 +472,16 @@ typedef struct agterm_st {
 
 } agterm_t;
 
+/**
+ * @brief 
+ * Refer to "agframe" for more info. 
+ */
 uint64_t * __agframe_location(void);
 
 /**
  * @brief 
  * Framerate of the program is held in here, you can of course
- * use any variable you want,... for now.
+ * use any variable you want... for now.
  */
 #define agframe (*__agframe_location())
 
@@ -520,7 +525,37 @@ int agtermclear(void);
 __extern_always_inline
 int agtermecho(bool echos);
 
+/**
+ * @fn @c agtermlimits(0)
+ * 
+ * @brief Return the current minimum and maximum x and y position.
+ * 
+ * @throw None.
+ * 
+ * @return Returns a agtermlimit_t structure with the containing
+ * x & y min & max. 
+ */
 agtermlimit_t agtermlimits(void);
+
+/**
+ * @fn @c __agtermsizechanged(0)
+ * 
+ * @brief Refer to agtermsizechanged definition.
+ * 
+ * @throw None.
+ * 
+ * @return Boolean indicating whether or not the terminal size changed.
+ */
+bool __agtermsizechanged(void);
+
+/**
+ * @brief 
+ * If the current terminal size changed the value
+ * returned by __agtermsizechanged() will be true, every call
+ * to the function that occurs while the terminal doesn't change size again
+ * will return false.
+ */
+#define agtermsizechanged __agtermsizechanged()
 
 /**
  * @fn @c agtermcurmove(1)
@@ -590,15 +625,77 @@ agcoord_t agtermcurpos(void);
  * aginit(1) argument structure.
  * See aginit(1) for further description.
  */
+// typedef struct aginit_arg {
+
+//     void (*initializer)(void);
+//     struct {
+//         void (*abnormal)(int);
+//         void (*normal)(void);
+//     } handler;
+
+// } aginit_arg;
+
 typedef struct aginit_arg {
 
-    void (*initializer)(void);
-    struct {
-        void (*abnormal)(int);
-        void (*normal)(void);
-    } handler;
+    void (^constructor)(void);
+    void (^destructor)(int);
 
 } aginit_arg;
+
+#define AG_CONSTRUCTOR_DEFAULT \
+^void(void) {                  \
+    setlocale(LC_ALL, "");     \
+	initscr();                 \
+   	nodelay(stdscr, TRUE);     \
+	agtermecho(false);         \
+	agtermcurhidden(true);     \
+}
+
+#ifdef AG_DEV
+#define AG_DESTRUCTOR_DEFAULT                   \
+^void(int _sig) {                               \
+agtermecho(true);                               \
+    agtermcurhidden(false);                     \
+    endwin();                                   \
+    if(__cont != NULL) {                        \
+        free(__cont->display._1D);              \
+        free(__cont->display._2D);              \
+        free(__cont->name);                     \
+        free(__cont);                           \
+    }                                           \
+    switch(_sig) {                              \
+        case SIGINT:                            \
+        printf("Ctrl-C exit.\n");               \
+        break;                                  \
+        case SIGSEGV:                           \
+        printf("Segfault occurred!\n");         \
+        break;                                  \
+        default:                                \
+        if(_sig != 0)                           \
+            printf("Exit signal: %d\n", _sig);  \
+        break;                                  \
+    }                                           \
+    while(viwerr(VIWERR_OCCURED, NULL)){        \
+    	viwerr(VIWERR_PRINT, NULL);             \
+    }                                           \
+}
+#else
+#define AG_DESTRUCTOR_DEFAULT            \
+^void(int _sig) {                        \
+    agtermecho(true);                    \
+    agtermcurhidden(false);              \
+    endwin();                            \
+    if(__cont != NULL){                  \
+        free(__cont->display._1D);       \
+        free(__cont->display._2D);       \
+        free(__cont->name);              \
+        free(__cont);                    \
+    }                                    \
+    while(viwerr(VIWERR_OCCURED, NULL)){ \
+    	viwerr(VIWERR_PRINT, NULL);      \
+    }                                    \
+}
+#endif
 
 /**
  * @fn @c aginit(1)
@@ -653,12 +750,58 @@ void aginit(
 void __aginitializer_default(void);
 
 /**
+ * @brief 
+ * Arguments for agexhndl, refer to agexhndl(3) for more info on what they do.
+ */
+enum agexhndl_args_en {
+    AGEXHNDL_RUN,
+    AGEXHNDL_ADD
+};
+
+/**
+ * @fn @c agexhndl(3)
+ * 
+ * @brief 
+ * This is where the main block function is stored and then ran during exit,
+ * arg accepts values from enum AGEXHNDL_ARGS. Basically atexit() calls
+ * __agexhndl_normal() which calls this function and this function calls
+ * the passed handler function. We don't need it to be to fast do we?
+ * 
+ * @param arg
+ *        Accepts values from enum agobjtype_en, check the template params.
+ *        for more information.
+ * 
+ * @param sig
+ *        Signal from agexhndlsig to handle abnormal exits.
+ * 
+ * @param handler
+ *        Block function for handling abnormal and normal exits.
+ * 
+ * @tparam arg.AGEXHNDL_RUN
+ *         Run the currently stored exit handler, if there is no exit handler
+ *         then run the default one
+ * 
+ * @tparam arg.AGEXHNDL_ADD
+ *         Add the currently passed exit handler.
+ * 
+ * @throw None.
+ * 
+ * @return Nothing.
+ * 
+ */
+void agexhndl(
+    enum agexhndl_args_en arg,
+    int signal,
+    void (^handler)(int)
+);
+
+/**
  * @fn @c agexhndladd
  * 
- * 
  * @brief
- * Add a new function that handles all screen exits.
- * This function is used inside of 
+ * Adds __agexhndl_abnormal to abnormal signal exits & __agexhndl_normal to
+ * atexit() function. Not much use outside of that.
+ * 
  */
 void agexhndladd(
     void (*sigfunc)(int),
@@ -683,7 +826,8 @@ void __agexhndl_abnormal(int signal);
  * @fn @c __agexhndl_normal(1)
  * 
  * @brief The normal exit handler.
- * Restores the console to its previous state before calling the program.
+ * Runs agexhndl and exits, this function is used to be given to
+ * the atexit() func.
  * 
  * @throw None and must not since its the exit handler.
  * 
@@ -699,6 +843,7 @@ void __agexhndl_normal(void);
  * 
  */
 int * __agexhndl_signal(void);
+
 /**
  * @fn @c agexhndlsig
  * 
@@ -789,6 +934,17 @@ agcont_t * agcontinit(
 );
 
 /**
+ * @fn @c agcontup
+ * 
+ * @brief 
+ * Update a agcont_t.
+ * 
+ * @param container 
+ * @return int 
+ */
+int agcontup(agcont_t * container);
+
+/**
  * @brief 
  * For testing purposes.
  */
@@ -798,9 +954,9 @@ void agcontdraw(
     agcoord_t pos
 );
 
-int agcontup(agcont_t * container);
-
+// #ifdef AG_DEV
 agcont_t ** __agcont(void);
 #define __cont (*__agcont())
+// #endif
 
 #endif /** @c ASIGRAPH_LIBRARY_INCLUDED */ 

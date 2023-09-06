@@ -8,28 +8,7 @@
 #include "../agansicode.h"
 #include "../asigraph.h"
 #include "../ext/viwerr/viwerr.h"
-
-bool __agtermsizechanged() {
-    static agtermlimit_t prev = {0};
-    static bool start = true;
-    if(start) {
-        prev = agtermlimits();
-        start = false;
-        return false;
-    }
-
-    if(prev.x.max != agtermlimits().x.max
-    || prev.y.max != agtermlimits().y.max) {
-        prev = agtermlimits();
-        return true;
-    }
-
-    prev = agtermlimits();
-    return false;
-
-}
-
-#define agtermsizechanged (__agtermsizechanged())
+#include <locale.h>
 
 int main(void) {
 
@@ -39,25 +18,25 @@ int main(void) {
     __cont = agcontinit((agcont_t){
         .left = {
             .position = ^uint32_t(uint32_t right, uint32_t xmax) {
-                return agtermlimits().x.min;
+                return 0;
             },
             .padding = 0
         },
         .right = {
             .position = ^uint32_t(uint32_t left, uint32_t xmax) {
-                return agtermlimits().x.max-1;
+                return 36;
             },
             .padding = 0
         },
         .top = {
             .position = ^uint32_t(uint32_t bottom, uint32_t ymax) {
-                return agtermlimits().y.min;
+                return 0;
             },
             .padding = 0
         },
         .bottom = {
             .position = ^uint32_t(uint32_t top, uint32_t ymax) {
-                return agtermlimits().y.max-1;
+                return 12;
             },
             .padding = 0
         },
@@ -67,7 +46,7 @@ int main(void) {
     });
 
     wchar_t buffer[128] = {0};
-    double framerate, deltatime, target = 120.0;
+    double framerate, deltatime, target = 30.0;
     while(agtimer(target, &framerate, &deltatime) == 0) {
 
         if(agframe >= 12000) break;
@@ -86,8 +65,8 @@ int main(void) {
         );
   
         agcontdraw(__cont, (agcoord_t){
-            .x = 0,
-            .y = 0,
+            .x = 9,
+            .y = 9,
             // .x = (COLS / 2) - (__cont->length.x / 2),
             // .y = (LINES / 2) - (__cont->length.y / 2),
         });

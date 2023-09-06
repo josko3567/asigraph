@@ -13,6 +13,35 @@ int * __agexhndl_signal() {
 
 }
 
+
+
+void agexhndl( 
+    enum agexhndl_args_en arg,
+    int signal,
+    void (^handler)(int))
+{
+
+    static void (^current)(int) = NULL; 
+
+    switch(arg) {
+
+        case AGEXHNDL_ADD:
+        current = handler;
+        break;
+
+        case AGEXHNDL_RUN:
+        if(current == NULL)
+            current = AG_DESTRUCTOR_DEFAULT;
+        current(signal);
+        break;
+
+        default:
+        break;
+    
+    }
+
+}
+
 // Add new handler to all exit handlers.
 void agexhndladd(
     void (*sigfunc)(int),
@@ -43,6 +72,7 @@ void agexhndladd(
 }
 
 // Default exit handler.
+// Totaly get it.
 void __agexhndl_abnormal(int sig) {
 
     agexhndlsig = sig;
@@ -50,36 +80,43 @@ void __agexhndl_abnormal(int sig) {
 
 }
 
+// These are phony exit handlers that push all the exit handling to agexhndl()
 void __agexhndl_normal(void) {
 
-    agtermecho(true); 
-    agtermcurhidden(false);
-    endwin();
-    // agcont_t * cont = __cont;
-    // __builtin_dump_struct(cont, &printf);
-    if(__cont != NULL){
-        free(__cont->display._1D);
-        free(__cont->display._2D);
-        free(__cont->name);
-        free(__cont);
-    }
-#ifdef AG_DEV
-    switch(agexhndlsig) {
-        case SIGINT:
-        printf("Ctrl-C exit.\n");
-        break;
 
-        case SIGSEGV:
-        printf("Segfault occurred!\n");
-        break;
+    agexhndl(
+        AGEXHNDL_RUN,
+        agexhndlsig,
+        NULL
+    );
+//     agtermecho(true); 
+//     agtermcurhidden(false);
+//     endwin();
+//     // agcont_t * cont = __cont;
+//     // __builtin_dump_struct(cont, &printf);
+//     if(__cont != NULL){
+//         free(__cont->display._1D);
+//         free(__cont->display._2D);
+//         free(__cont->name);
+//         free(__cont);
+//     }
+// #ifdef AG_DEV
+//     switch(agexhndlsig) {
+//         case SIGINT:
+//         printf("Ctrl-C exit.\n");
+//         break;
 
-        default:
-        if(agexhndlsig != 0) printf("%d\n", agexhndlsig);
-        break;
-    }
-#endif
-    while(viwerr(VIWERR_OCCURED, NULL)){
-    	viwerr(VIWERR_PRINT, NULL);
-    }
+//         case SIGSEGV:
+//         printf("Segfault occurred!\n");
+//         break;
+
+//         default:
+//         if(agexhndlsig != 0) printf("%d\n", agexhndlsig);
+//         break;
+//     }
+// #endif
+//     while(viwerr(VIWERR_OCCURED, NULL)){
+//     	viwerr(VIWERR_PRINT, NULL);
+//     }
 
 }

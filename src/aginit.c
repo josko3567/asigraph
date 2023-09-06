@@ -3,17 +3,6 @@
 #include <locale.h>
 #include "../asigraph.h"
 
-void __aginitializer_default(
-	void)
-{
-	setlocale(LC_ALL, "");
-	initscr();
-    	nodelay(stdscr, TRUE);
-	agtermecho(false);
-	agtermcurhidden(true);
-	return;
-}
-
 /**
  * @brief 
  * Setup for the terminal.
@@ -22,18 +11,24 @@ void aginit(
 	aginit_arg arg) 
 {
 
-	// Initialize handler for all types of exits.
+	/* Input new exit handler. */
+	agexhndl(
+		AGEXHNDL_ADD,
+		0,
+		arg.destructor == NULL ? 
+			AG_DESTRUCTOR_DEFAULT : arg.destructor
+	); 
+
+	/* Initialize "middleman" handlers for all 
+	types of exits. */
 	agexhndladd(
-		arg.handler.abnormal != NULL ?
-			arg.handler.abnormal : __agexhndl_abnormal,
-		arg.handler.normal != NULL ? 
-			arg.handler.normal : __agexhndl_normal
+		__agexhndl_abnormal,
+		__agexhndl_normal
 	);
 	
-	// Run the initializer-
-	arg.initializer = arg.initializer != NULL ? 
-		arg.initializer : __aginitializer_default;
-	arg.initializer();
-	return;
+	// Run the initializer.
+	arg.constructor = (arg.constructor == NULL) ?
+		AG_CONSTRUCTOR_DEFAULT : arg.constructor;
+	arg.constructor();
 
 }

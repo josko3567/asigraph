@@ -18,10 +18,6 @@ int agtermclear(void){
 
 }
 
-/**
- * @brief 
- * Enable echo in the terminal.
- */
 int agtermecho(
     bool echos)
 {
@@ -44,4 +40,24 @@ agtermlimit_t agtermlimits(void) {
         }
     };
     
+}
+
+bool __agtermsizechanged(void) {
+    static agtermlimit_t prev = {0};
+    static bool start = true;
+    if(start) {
+        prev = agtermlimits();
+        start = false;
+        return false;
+    }
+
+    if(prev.x.max != agtermlimits().x.max
+    || prev.y.max != agtermlimits().y.max) {
+        prev = agtermlimits();
+        return true;
+    }
+
+    prev = agtermlimits();
+    return false;
+
 }

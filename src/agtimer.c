@@ -1,6 +1,5 @@
 #include "../ext/viwerr/viwerr.h"
 #include "../asigraph.h"
-#include <unistd.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 
@@ -228,18 +227,13 @@ int agtimer(
 	#define _XOPEN_SOURCE 500
 #endif
 
-#include "../ext/viwerr/viwerr.h"
 #include <stdbool.h>
 #include <time.h> /* timespec clock_gettime & nanosleep */
 #include <errno.h> /* EINTR & EINVAL */
 
 #define NS_IN_S_LL ((long long)1000000000)
 #define NS_IN_S_LF ((double)1000000000.0)
-
-/* Constants ASIGRAPH_TIMER_LINUX_NS_REF_LL
-and ASIGRAPH_TIMER_LINUX_NS_REF_LF */
-
-#define CLOCK CLOCK_MONOTONIC
+#define CLOCK      CLOCK_MONOTONIC
 /*
  * Conversion from double sleep time in sec
  * to timespec sec and nsec.
