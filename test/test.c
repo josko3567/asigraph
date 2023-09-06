@@ -1,76 +1,104 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#if defined(_WIN32) || defined(_WIN64)
-#include <Windows.h>
-#else
-#include <sys/prctl.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#endif
-
+#define NCURSES_WIDECHAR 1
+#include <ncursesw/ncurses.h>
+#include <wchar.h>
+#include <string.h>
 #include "../agansicode.h"
 #include "../asigraph.h"
 #include "../ext/viwerr/viwerr.h"
-#include "../ext/obj.h/obj.h"
 
-// struct Block_layout {
-//     void *isa;
-//     int flags;
-//     int reserved; 
-//     void (*invoke)(void *, ...);
-//     struct Block_descriptor *descriptor;
-// };
+bool __agtermsizechanged() {
+    static agtermlimit_t prev = {0};
+    static bool start = true;
+    if(start) {
+        prev = agtermlimits();
+        start = false;
+        return false;
+    }
 
+    if(prev.x.max != agtermlimits().x.max
+    || prev.y.max != agtermlimits().y.max) {
+        prev = agtermlimits();
+        return true;
+    }
 
+    prev = agtermlimits();
+    return false;
 
+}
+
+#define agtermsizechanged (__agtermsizechanged())
 
 int main(void) {
 
-        aginit((aginit_arg){0});
-        
-#if defined(_WIN32) || defined(_WIN64)
+    aginit((aginit_arg){0});
+    int br = baudrate();
 
-#else
-	struct winsize w;
-    	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-#endif
-	// void (^atexitf)(void) = ^{printf("Hello world!");};
-	// atexit(((void)(*)(void))(((struct Block_layout *)atexitf`)->invoke));
+    __cont = agcontinit((agcont_t){
+        .left = {
+            .position = ^uint32_t(uint32_t right, uint32_t xmax) {
+                return agtermlimits().x.min;
+            },
+            .padding = 0
+        },
+        .right = {
+            .position = ^uint32_t(uint32_t left, uint32_t xmax) {
+                return agtermlimits().x.max-1;
+            },
+            .padding = 0
+        },
+        .top = {
+            .position = ^uint32_t(uint32_t bottom, uint32_t ymax) {
+                return agtermlimits().y.min;
+            },
+            .padding = 0
+        },
+        .bottom = {
+            .position = ^uint32_t(uint32_t top, uint32_t ymax) {
+                return agtermlimits().y.max-1;
+            },
+            .padding = 0
+        },
+        .name = L"Temporary Container.",
+        .border = AG_CONTAINER_BORDER_DEFAULT,
+        .flag.render = true
+    });
 
+    wchar_t buffer[128] = {0};
+    double framerate, deltatime, target = 120.0;
+    while(agtimer(target, &framerate, &deltatime) == 0) {
 
-        double framerate, deltatime, target = 60.0;
-	// agtermbuffer(AG_ALT_BUFFER);
-        // agcurhidden(true);
-	// puts("\x1b[1J");
-        while(agtimer(target, &framerate, &deltatime) == 0) {
-
-                // ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-                if(agframe >= 1200000) break;
-		agcurmove((agcoord_t){.x=0,.y=0});
-                fprintf(stdout, 
-                        "Target = %.3f, "
-                        "Current = %.5f, "
-                        "Delta = %.5f, "
-                        "Frame = %lu\n",
-                        target,
-                        framerate,
-                        deltatime,
-                        agframe
-                );
-		const char * str= "Hello!\n";
-                agcurmove((agcoord_t){
-			.x = w.ws_col/2-(strlen(str)/2), 
-			.y = w.ws_row/2
-		});
-		printf("%s", str);
-                agframe += 1;
-
+        if(agframe >= 12000) break;
+        if(agtermsizechanged == true){
+            agtermclear();
+            __cont->update.all(__cont);
         }
-	// puts("\x1b[1J");
-	// agtermbuffer(AG_MAIN_BUFFER);
-        // agcurhidden(false);
 
-        return 0;
+        swprintf(buffer, 127, L"Framerate: %lf, %d, %d", 
+            framerate, br, agframe);
+        wcsncpy((wchar_t*)(__cont->display._2D[1]+1), 
+            buffer,
+            wcsnlen(buffer, 127) > AG_CONTAINER_X_LENGTH(__cont)-2 ? 
+                AG_CONTAINER_X_LENGTH(__cont)-2:
+                wcsnlen(buffer, 127)
+        );
+  
+        agcontdraw(__cont, (agcoord_t){
+            .x = 0,
+            .y = 0,
+            // .x = (COLS / 2) - (__cont->length.x / 2),
+            // .y = (LINES / 2) - (__cont->length.y / 2),
+        });
+        
+        agtermrefresh();
+        agframe += 1;
+        
+    }
+
+
+
+    return 0;
 
 }

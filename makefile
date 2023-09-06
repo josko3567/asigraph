@@ -34,7 +34,7 @@ DEBUG  = t
 # Debug/release flags...
 DFLAGS = 
 # Viwerr library home directory...
-VIWERR = ext/viwerr/viwerr
+VIWERR = ./ext/viwerr/viwerr
 # Test path...
 EXECUTE_TEST = ./test/a
 # Compiler...
@@ -61,16 +61,16 @@ else
 	PRINT_COLOR = -e "$(1)$(2)\e[0;97m"
 endif
 
+ifeq ($(OS),Windows_NT)
+	VIWERR := $(addsuffix .lib, $(VIWERR))
+else
+	VIWERR := $(addsuffix .a, $(VIWERR))
+endif
+
 # Setup debug commands and libraries to work on OS basis...
 ifeq ($(DEBUG), f) 
-	undefine VIWERR
 	DFLAGS = -O3
 else
-	ifeq ($(OS),Windows_NT)
-		VIWERR := $(addsuffix .lib, $(VIWERR))
-	else
-		VIWERR := $(addsuffix .a, $(VIWERR))
-	endif
 	DFLAGS = -g -DAG_DEV
 endif
 
@@ -101,7 +101,7 @@ $(STATIC): $(OBJ) $(VIWERR)
 # Compile objects...
 %.o: %.c $(VIWERR)
 	@$(PRINT) $(call PRINT_COLOR,$(GREEN),- Compiling:) $<
-	@$(CC) -lm -c $(DFLAGS) $(CFLAGS) $< -o $@
+	@$(CC) -lm -c $(DFLAGS) $(CFLAGS) $< -o $@ 
 
 # Compile external error detection library...
 $(VIWERR):
@@ -118,7 +118,7 @@ clean:
 .PHONY: test
 test: $(STATIC)
 	@$(PRINT) $(call PRINT_COLOR,$(PURPLE),[Running test/test.c])
-	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) $(VIWERR) -std=$(STD) $(CFLAGSTEST) 
+	@$(CC) -lm -g test/test.c -o $(EXECUTE_TEST) $(STATIC) -std=$(STD) $(CFLAGSTEST) $(VIWERR) -lncursesw
 	@$(EXECUTE_TEST)
 
 # Clean then test...

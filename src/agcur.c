@@ -3,40 +3,50 @@
 #include "../asigraph.h"
 
 /**
- * @fn @c agcurmove(1)
+ * @fn @c agtermcurmove(1)
  * 
  * @brief 
  * Move console cursor to @c coord's position.
  */
-void agcurmove(agcoord_t coord) {
+int agtermcurmove(agcoord_t coord) {
         
-        fprintf(stdout, "\x1b[%d;%dH", coord.y, coord.x);
+	return move(coord.y, coord.x);
+        
+}
+
+/**
+ * @fn @c agtermcurpos(0)
+ * 
+ * @brief 
+ * Get console cursor position.
+ */
+agcoord_t agtermcurpos(void) {
+
+    return (agcoord_t){.x = getcurx(stdscr), .y = getcury(stdscr)};
 
 }
 
-
-
 /**
- * @fn @c agcurhome(0)
+ * @fn @c agtermcurhome(0)
  * 
  * @brief 
  * Move console cursor to (0, 0) position.
  */
-void agcurhome(void) {
+int agtermcurhome(void) {
 
-        fprintf(stdout, "\x1b[H");
+    return move(1,1);
 
 }
 
 /**
- * @fn @c agcurhidden(1)
+ * @fn @c agtermcurhidden(1)
  * 
  * @brief 
  * Toggle cursor visibility.
  */
-void agcurhidden(bool hidden) {
+void agtermcurhidden(bool hidden) {
 
-        if(hidden) fprintf(stdout,"\x1b[?25l");
-        else fprintf(stdout,"\x1b[?25h");
+    if(hidden) curs_set(0);
+    else       curs_set(1);
 
 }
