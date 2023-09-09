@@ -66,16 +66,42 @@
 #include <stdbool.h>
 #include <signal.h>
 
-#define NCURSES_WIDECHAR 1
-#include <ncursesw/ncurses.h>
-
-#include "agansicode.h"
-#ifdef AG_DEV
-#include "ext/viwerr/viwerr.h"
+#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
+#	define AG_PLATFORM_WINDOWS
+#	define AG_PLATFORM "Windows"
+#elif defined(__linux__)
+#	define AG_PLATFORM_LINUX
+#	define AG_PLATFORM "Linux"
+#else
+#	define AG_PLATFOR_UNKNOWN
+#	define AG_PLATFORM "Unknown"
 #endif
 
+#if defined(AG_PLATFORM_WINDOWS)
+#	ifndef PDC_WIDE
+#		define PDC_WIDE
+#	endif
+#	include "./ext/PDCurses/curses.h"
+#elif defined(AG_PLATFORM_LINUX)
+#	ifndef NCURSES_WIDECHAR
+#		define NCURSES_WIDECHAR 1
+#	endif
+#	include <ncursesw/ncurses.h>
+#elif AG_PLATFORM_UNKNOWN
+#	ifndef NCURSES_WIDECHAR
+#		define NCURSES_WIDECHAR 1
+#	endif
+#	include <ncursesw/ncurses.h>
+#	pragma message ("Warning from asigraph:" \
+	" Currently compiling for a unknown platform." \
+	" Supported platforms are Windows and Linux.")
+#endif
+
+#include "agansicode.h"
+#include "ext/viwerr/viwerr.h"
+
 #ifndef __BLOCKS__
-#error must be compiled with -fblocks option enabled
+#	error must be compiled with -fblocks option enabled.
 #endif
 
 #ifndef ASIGRAPH_LIBRARY_INCLUDED
@@ -132,7 +158,6 @@
     (sizeof(wchar_t)                    \
     * AG_CONTAINER_X_LENGTH(cont)       \
     * AG_CONTAINER_Y_LENGTH(cont)) 
-
 
 /**
  * @brief 
@@ -522,7 +547,6 @@ int agtermclear(void);
  * 
  * @return ncurses ERR on error, ncurses OK on success.
  */
-__extern_always_inline
 int agtermecho(bool echos);
 
 /**
@@ -548,6 +572,21 @@ agtermlimit_t agtermlimits(void);
  */
 bool __agtermsizechanged(void);
 
+#ifdef AG_PLATFORM_WINDOWS
+/**
+ * @brief 
+ * If the current terminal size changed the value
+ * returned by __agtermsizechanged() will be true, every call
+ * to the function that occurs while the terminal doesn't change size again
+ * will return false.
+ * 
+ * @warning
+ * Platform specific behavior: on Windows resize_term(0,0) will be ran 
+ * manually before checking if the size changed to update the COLS and 
+ * LINES value of stdscr.
+ */
+#define agtermsizechanged ({resize_term(0,0); __agtermsizechanged();})
+#else
 /**
  * @brief 
  * If the current terminal size changed the value
@@ -556,6 +595,7 @@ bool __agtermsizechanged(void);
  * will return false.
  */
 #define agtermsizechanged __agtermsizechanged()
+#endif
 
 /**
  * @fn @c agtermcurmove(1)
@@ -625,16 +665,6 @@ agcoord_t agtermcurpos(void);
  * aginit(1) argument structure.
  * See aginit(1) for further description.
  */
-// typedef struct aginit_arg {
-
-//     void (*initializer)(void);
-//     struct {
-//         void (*abnormal)(int);
-//         void (*normal)(void);
-//     } handler;
-
-// } aginit_arg;
-
 typedef struct aginit_arg {
 
     void (^constructor)(void);
@@ -642,13 +672,14 @@ typedef struct aginit_arg {
 
 } aginit_arg;
 
-#define AG_CONSTRUCTOR_DEFAULT \
-^void(void) {                  \
-    setlocale(LC_ALL, "");     \
-	initscr();                 \
-   	nodelay(stdscr, TRUE);     \
-	agtermecho(false);         \
-	agtermcurhidden(true);     \
+#define AG_CONSTRUCTOR_DEFAULT  \
+^void(void) {                   \
+    setlocale(LC_ALL, "");      \
+	agescseq(ESCSEQ_ALT_BUFFER);\
+	initscr();                  \
+   	nodelay(stdscr, TRUE);      \
+	agtermecho(false);          \
+	agtermcurhidden(true);      \
 }
 
 #ifdef AG_DEV
@@ -657,6 +688,7 @@ typedef struct aginit_arg {
 agtermecho(true);                               \
     agtermcurhidden(false);                     \
     endwin();                                   \
+	agescseq(ESCSEQ_MAIN_BUFFER);               \
     if(__cont != NULL) {                        \
         free(__cont->display._1D);              \
         free(__cont->display._2D);              \
@@ -948,15 +980,15 @@ int agcontup(agcont_t * container);
  * @brief 
  * For testing purposes.
  */
-__attribute_deprecated__ __extern_inline
+__attribute__((deprecated))
 void agcontdraw(
     agcont_t * c, 
     agcoord_t pos
 );
 
-// #ifdef AG_DEV
+#ifdef AG_DEV
 agcont_t ** __agcont(void);
 #define __cont (*__agcont())
-// #endif
+#endif
 
 #endif /** @c ASIGRAPH_LIBRARY_INCLUDED */ 

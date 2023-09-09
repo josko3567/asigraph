@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <limits.h>
-#include <unistd.h>
+// #include <unistd.h>
 #include "../asigraph.h"
 #include "../ext/viwerr/viwerr.h"
 
@@ -156,10 +156,11 @@ agcont_t * agcontnormalize(
      * but its probably a very small chance.
      */
 
-    bool   leftdep = false;
-    bool  rightdep = false;
-    bool    topdep = false;
-    bool bottomdep = false;
+    bool   
+		leftdep = false,
+      	rightdep = false,
+        topdep = false,
+    	bottomdep = false;
 
     // A mix of primes and regular numbers.
     int primesmix[] = {
@@ -361,9 +362,9 @@ int agcontdisup(
             (wchar_t*)((c->display._1D)+(i*AG_CONTAINER_X_LENGTH(c)));
     }
 
-    memset(c->display._1D, ' ', 
-        AG_CONTAINER_DISPLAY_SIZE(c)
-    );
+	wmemset(c->display._1D, (wchar_t)' ',
+		AG_CONTAINER_DISPLAY_SIZE(c)
+	);
 
     return 0;
 
@@ -475,7 +476,12 @@ agcont_t * agcontinit(
 
     }
 
-    wcsncpy( name, arg.name, AG_CONTAINER_NAME_SIZE );
+#ifdef AG_PLATFORM_IS_WINDOWS
+    	wcsncpy_s( name, AG_CONTAINER_NAME_SIZE+1, arg.name, AG_CONTAINER_NAME_SIZE );
+#else
+	wcsncpy( name, arg.name, AG_CONTAINER_NAME_SIZE );
+#endif
+
     container->name = name;
 
     // Update position twice so that __prevpos isn't 0 after one update.
@@ -500,9 +506,9 @@ int agcontup(
         viwerr(VIWERR_PUSH, &(viwerr_package){
             .code = EINVAL,
             .name =
-            (char*)"agcontupdate(1): Invalid parameter.",
+            (char*)"agcontup(1): Invalid parameter.",
             .message =
-            (char*)"agcontupdate(1) was given a container "
+            (char*)"agcontup(1) was given a container "
             "that was not first initalized with agcontinit(1).",
             .group = AG_ERROR_GROUP
         });
@@ -515,7 +521,7 @@ int agcontup(
         viwerr(VIWERR_PUSH, &(viwerr_package){
             .code = ENOMEM,
             .name =
-            (char*)"agcontupdate() failed...",
+            (char*)"agcontup(1) failed...",
             .message =
             (char*)"ENOMEM: function agcontdisup(1) failed with "
             "ENOMEM, check the error message from agcontdisup() "
@@ -531,9 +537,7 @@ int agcontup(
 
 }
 
-
-
-__attribute_deprecated__ __always_inline
+__attribute__((deprecated))
 void agcontdraw(agcont_t * ct, agcoord_t pos) {
 
     if(ct->flag.created == false

@@ -4,8 +4,6 @@
 #include "../ext/viwerr/viwerr.h"
 #include "../asigraph.h"
 
-#include <ncursesw/form.h>
-
 int agtermrefresh(void) {
 	
     return refresh();
@@ -26,7 +24,7 @@ int agtermecho(
 
 }
 
-__always_inline
+inline __attribute__((always_inline))
 agtermlimit_t agtermlimits(void) {
 
     return (agtermlimit_t){
@@ -51,8 +49,11 @@ bool __agtermsizechanged(void) {
         return false;
     }
 
+    
+
     if(prev.x.max != agtermlimits().x.max
-    || prev.y.max != agtermlimits().y.max) {
+    || prev.y.max != agtermlimits().y.max){
+    // || is_termresized()) {
         prev = agtermlimits();
         return true;
     }

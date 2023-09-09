@@ -202,7 +202,7 @@ int agtimer(
 		viwerr(VIWERR_PUSH, &(viwerr_package){
 			.code = EINVAL,
 			.group = (char*)"errno"
-		})
+		});
 		return -1;
 
 	}

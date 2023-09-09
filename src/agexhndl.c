@@ -1,3 +1,4 @@
+#define _POSIX
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -12,8 +13,6 @@ int * __agexhndl_signal() {
     return &sig;
 
 }
-
-
 
 void agexhndl( 
     enum agexhndl_args_en arg,
@@ -48,23 +47,28 @@ void agexhndladd(
     void (*atexitfunc)(void))
 {
 
-    struct sigaction act = {
+    // struct sigaction act = {
 
-        .sa_handler  = sigfunc,
-        .sa_flags    = 0,
-        .sa_mask     = {0},
-        .sa_restorer = NULL
+    //     .sa_handler  = sigfunc,
+    //     .sa_flags    = 0,
+    //     .sa_mask     = {0},
+    //     .sa_restorer = NULL
 
-    };
+    // };
 
     // Add default action to exit's.
-    sigaction(SIGABRT, &act, NULL);
-    sigaction(SIGINT , &act, NULL);
-    sigaction(SIGQUIT, &act, NULL);
-    sigaction(SIGTERM, &act, NULL);
-    sigaction(SIGHUP , &act, NULL);
-    sigaction(SIGSEGV, &act, NULL);
-    sigaction(SIGILL , &act, NULL);
+    signal(SIGABRT, sigfunc);
+    signal(SIGINT , sigfunc);
+    signal(SIGTERM, sigfunc);
+    signal(SIGSEGV, sigfunc);
+    signal(SIGILL , sigfunc); 
+#ifdef SIGQUIT
+    signal(SIGQUIT, sigfunc);
+#endif
+#ifdef SIGHUP
+    signal(SIGHUP , sigfunc);
+#endif
+    // signal
     atexit(atexitfunc);
 
     return;       
