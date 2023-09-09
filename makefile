@@ -155,7 +155,12 @@ ifeq ($(PLATFORM),WIN32)
 	COMMA := ,
 	REMOVE :=rm -Force $(word 1,$(OBJ) $(LIBRARY) $(BIN))$(foreach f,$(wordlist 2,99999,$(OBJ) $(LIBRARY) $(BIN)),$(COMMA)$(f)) -ErrorAction Ignore
 else
-	REMOVE_ALL := rm -f *.o *.dll *.exe *.a *.out *.so
+	REMOVE_ALL := find . -name "*.o" -type f -delete; \
+	find . -name "*.dll" -type f -delete; \
+	find . -name "*.exe" -type f -delete; \
+	find . -name "*.out" -type f -delete; \
+	find . -name "*.so" -type f -delete; \
+	find . -name "*.a" -type f -delete;
    	REMOVE := rm -f $(OBJ) $(LIBRARY) $(BIN)
 endif
 
@@ -177,20 +182,20 @@ $(LIBEXT):
 # Cleanup...
 .PHONY: clean
 clean: 
-	@$(PRINT) $(call COLOR,$(YELLOW),Running on: $(PLATFORM)/$(ARCH):)
-	@$(PRINT) $(call COLOR,$(RED),[Deleting local objects, libraries & executables])
+	@$(PRINT) $(call COLOR,$(YELLOW),Running on: [$(PLATFORM)/$(ARCH)])
+	@$(PRINT) $(call COLOR,$(RED),[Deleting local objects libraries & executables])
 	$(REMOVE)
 
 .PHONY: cleanall
 cleanall:
-	@$(PRINT) $(call COLOR,$(YELLOW),Running on: $(PLATFORM)/$(ARCH):)
-	@$(PRINT) $(call COLOR,$(RED),[Deleting all objects, libraries & executables])
+	@$(PRINT) $(call COLOR,$(YELLOW),Running on: [$(PLATFORM)/$(ARCH)])
+	@$(PRINT) $(call COLOR,$(RED),[Deleting all objects libraries & executables])
 	$(REMOVE_ALL)
-
 
 # Create library and run test...
 .PHONY: test
 test: $(LIBRARY)
+	@$(PRINT) $(call COLOR,$(YELLOW),Running on: [$(PLATFORM)/$(ARCH)])
 	@$(PRINT) $(call COLOR,$(YELLOW),[Running test/test.c])
 	@$(CC) $(CFLAGS) test/test.c -o $(BIN) $(LIBRARY) $(LDFLAGS)
 	@$(BIN)

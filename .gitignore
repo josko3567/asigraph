@@ -1,8 +1,9 @@
-*.a
 *.o
-*.lib
+*.a
+*.dll
+*.so
 *.out
 *.exe
 .vscode
 .editorconfig
-thonkers*.md
+
