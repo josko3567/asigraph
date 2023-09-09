@@ -49,11 +49,8 @@ bool __agtermsizechanged(void) {
         return false;
     }
 
-    
-
     if(prev.x.max != agtermlimits().x.max
     || prev.y.max != agtermlimits().y.max){
-    // || is_termresized()) {
         prev = agtermlimits();
         return true;
     }

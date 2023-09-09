@@ -680,6 +680,7 @@ typedef struct aginit_arg {
    	nodelay(stdscr, TRUE);      \
 	agtermecho(false);          \
 	agtermcurhidden(true);      \
+	agtermsizechanged()         \
 }
 
 #ifdef AG_DEV
