@@ -22,7 +22,7 @@ else
     ifeq ($(UNAME_S),Darwin)
         PLATFORM = OSX
     endif
-    UNAME_P := $(shell uname -p)
+    UNAME_P := $(shell uname -m)
     ifeq ($(UNAME_P),x86_64)
         ARCH = AMD64
     endif
@@ -34,10 +34,14 @@ else
     endif
 endif
 
-ifeq (UNKNOWN, $(filler UNKNOWN, $(PLATFORM), $(ARCH)))
-$(error Unsported platform or architecure. PLATFORM: $(PLATFORM), ARCH: $(ARCH))
-endif
+PLATFORM_CHECK_IGNORE ?= F
 
+ifeq ($(PLATFORM_CHECK_IGNORE),F)
+	ifeq ($(PLATFORM),UNKNOWN)
+$(error Unsupported platform. Run make with PLATFORM_CHECK_IGNORE=T \
+to remove platform dependency.)
+	endif
+endif
 
 ifeq ($(PLATFORM),WIN32)
 
@@ -54,7 +58,7 @@ ifeq ($(PLATFORM),WIN32)
 	CYAN   := Cyan
 	WHITE  := White
 
-	PRINT  = Write-Host
+	PRINT  := Write-Host
 	COLOR  = -ForegroundColor $(1) "$(2)"
 
 
@@ -70,7 +74,7 @@ else
 	CYAN   := \e[$(BOLD);96m
 	WHITE  := \e[$(BOLD);97m
 
-	PRINT  = echo
+	PRINT  := echo
 	COLOR  = -e "$(1)$(2)\e[0;97m"
 
 endif
@@ -79,8 +83,10 @@ endif
 #######################################
 # START: Main settings.
 
+DEBUG ?= T
+
 ### Available values: STATIC, DYNAMIC
-LIBTYPE := STATIC
+LIBTYPE ?= STATIC
 ###
 
 LIBRARY = asigraph
@@ -90,8 +96,8 @@ ifeq ($(PLATFORM),WIN32)
 	else ifeq ($(LIBTYPE),DYNAMIC)
 		LIBRARY := $(addsuffix .dll, $(LIBRARY))
 	else
-		$(error Library type unspecified, set to $(LIBTYPE), must be either \
-		STATIC or DYNAMIC)
+$(error Library type unknown, set to "$(LIBTYPE)". Must be either \
+STATIC or DYNAMIC)
 	endif
 else
 	ifeq ($(LIBTYPE),STATIC)
@@ -99,22 +105,20 @@ else
 	else ifeq ($(LIBTYPE),DYNAMIC)
 		LIBRARY := $(addsuffix .so, $(LIBRARY))
 	else
-		$(error Library type unspecified, set to $(LIBTYPE), must be either \
-		STATIC or DYNAMIC)
+$(error Library type unspecified, set to $(LIBTYPE), must be either \
+STATIC or DYNAMIC)
 	endif
 endif
 
-BIN ?= test/test
+BIN    ?= test/test
+BINSRC := $(addsuffix .c, $(BIN))
 ifeq ($(PLATFORM),WIN32)
-	BIN := $(addsuffix .exe, $(BIN))
+	BINEXEC := $(addsuffix .exe, $(BIN))
 else
-	BIN := $(addsuffix .out, $(BIN))
+	BINEXEC := $(addsuffix .out, $(BIN))
 endif
 
-DEBUG ?= T
-
-CC = clang
-
+CC  = clang
 STD = gnu2x
 
 CFLAGS = -fblocks -std=$(STD) -Wall -Wextra -Wpedantic \
@@ -134,7 +138,7 @@ ifeq ($(PLATFORM),WIN32)
 	LIBEXT += ./ext/PDCurses/wincon/pdcurses.a
 endif
 
-MAKELIBEXT = $(foreach file,$(LIBEXT), $(dir $(file)))
+LIBEXTDIR = $(foreach file,$(LIBEXT), $(dir $(file)))
 
 # Link:
 LDFLAGS = -lm -lBlocksRuntime $(LIBEXT)
@@ -147,58 +151,75 @@ endif
 # Source
 SRCDIR = ./src
 
+# END: Main settings.
+#######################################
+
 SRC = $(foreach D,$(SRCDIR),$(wildcard $(D)/*.c))   
 OBJ = $(patsubst %.c,%.o,$(SRC))   
 
 ifeq ($(PLATFORM),WIN32)
-    REMOVE_ALL := Get-ChildItem * -Include *.o, *.dll, *.exe, *.a, *.out, *.so -Recurse | Remove-Item
+    REMOVE_ALL := Get-ChildItem * \
+	-Include *.o, *.dll, *.exe, *.a, *.out, *.so -Recurse | Remove-Item
 	COMMA := ,
-	REMOVE :=rm -Force $(word 1,$(OBJ) $(LIBRARY) $(BIN))$(foreach f,$(wordlist 2,99999,$(OBJ) $(LIBRARY) $(BIN)),$(COMMA)$(f)) -ErrorAction Ignore
+	REMOVE := rm -Force \
+	$(word 1,$(OBJ) $(LIBRARY) $(BIN)) \
+	$(foreach f,$(wordlist 2,99999,$(OBJ) $(LIBRARY) $(BIN)),$(COMMA)$(f)) \
+	-ErrorAction Ignore
 else
 	REMOVE_ALL := find . -name "*.o" -type f -delete; \
 	find . -name "*.dll" -type f -delete; \
 	find . -name "*.exe" -type f -delete; \
 	find . -name "*.out" -type f -delete; \
-	find . -name "*.so" -type f -delete; \
-	find . -name "*.a" -type f -delete;
+	find . -name  "*.so" -type f -delete; \
+	find . -name   "*.a" -type f -delete;
    	REMOVE := rm -f $(OBJ) $(LIBRARY) $(BIN)
 endif
 
-# Compile library library...
+# Link library...
 $(LIBRARY): $(LIBEXT) $(OBJ)
-	@$(PRINT) $(call COLOR,$(PURPLE),[Link (LIBRARY)])
+	@$(PRINT) $(call COLOR,$(YELLOW),## Build info:)
+	@$(PRINT) $(call COLOR,$(YELLOW),##     Platform ~ Arch: \
+	$(PLATFORM) ~ $(ARCH))
+	@$(PRINT) $(call COLOR,$(YELLOW),##     Library name ~ type: \
+	$(LIBRARY) ~ $(LIBTYPE))
+	@$(PRINT) $(call COLOR,$(YELLOW),##     Test file: $(BINSRC) ~ $(BINEXEC))
+	@$(PRINT) $(call COLOR,$(YELLOW),##     Debug mode: $(DEBUG))
+	@$(PRINT) $(call COLOR,$(YELLOW),##     Ignore platform check: \
+	$(PLATFORM_CHECK_IGNORE))
+	@$(PRINT) $(call COLOR,$(PURPLE),>> Linking library:)
 	ar rcs $@ $(OBJ)
 
 # Compile objects...
 %.o: %.c
-	@$(PRINT) $(call COLOR,$(GREEN),- Compiling:) $<
+	@$(PRINT) $(call COLOR,$(GREEN),>> Compiling:) $<
 	@$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS) 
 
-# Compile external error detection library...
+# Compile external dependencies...
 $(LIBEXT):
-	@$(PRINT) $(call COLOR,$(PURPLE),[Compiling external library:])
-	$(foreach dir,$(MAKELIBEXT),make -C ./$(dir) WIDE=Y;)
+	@$(PRINT) $(call COLOR,$(PURPLE),>> git pull-ing external dependencies:)
+	$(foreach dir,$(LIBEXTDIR),git -C ./$(dir) pull;)
+	@$(PRINT) $(call COLOR,$(PURPLE),>> Compiling external dependencies:)
+	$(foreach dir,$(LIBEXTDIR),make -C ./$(dir) WIDE=Y;)
 
 # Cleanup...
 .PHONY: clean
 clean: 
-	@$(PRINT) $(call COLOR,$(YELLOW),Running on: [$(PLATFORM)/$(ARCH)])
-	@$(PRINT) $(call COLOR,$(RED),[Deleting local objects libraries & executables])
+	@$(PRINT) $(call COLOR,$(RED),>> \
+	Deleting local objects libraries & executables)
 	$(REMOVE)
 
 .PHONY: cleanall
 cleanall:
-	@$(PRINT) $(call COLOR,$(YELLOW),Running on: [$(PLATFORM)/$(ARCH)])
-	@$(PRINT) $(call COLOR,$(RED),[Deleting all objects libraries & executables])
+	@$(PRINT) $(call COLOR,$(RED),>> \
+	Deleting all objects libraries & executables)
 	$(REMOVE_ALL)
 
 # Create library and run test...
 .PHONY: test
 test: $(LIBRARY)
-	@$(PRINT) $(call COLOR,$(YELLOW),Running on: [$(PLATFORM)/$(ARCH)])
-	@$(PRINT) $(call COLOR,$(YELLOW),[Running test/test.c])
-	@$(CC) $(CFLAGS) test/test.c -o $(BIN) $(LIBRARY) $(LDFLAGS)
-	@$(BIN)
+	@$(PRINT) $(call COLOR,$(PURPLE),>> Compiling/running $(BINSRC))
+	$(CC) $(CFLAGS) $(BINSRC) -o $(BINEXEC) $(LIBRARY) $(LDFLAGS)
+	@$(BINEXEC)
 
 # Clean then test...
 .PHONY: rebuild

@@ -38,7 +38,7 @@ int main(void) {
             },
             .padding = 0
         },
-        .name = L"Temporary Container.",
+        .name = (wchar_t*)L"Temporary Container.",
         .border = AG_CONTAINER_BORDER_DEFAULT,
         .flag.render = true
     });
@@ -72,13 +72,6 @@ int main(void) {
             // .y = (LINES / 2) - (__cont->length.y / 2),
         });
 
-		// if( __cont->length.x >= 4
-		// &&  __cont->length.y >= 4) {
-
-		// 	printw("%d\n", __cont->display._2D[1][1]);
-
-		// }
-        
         agtermrefresh();
         agframe += 1;
         

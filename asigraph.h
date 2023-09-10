@@ -718,12 +718,6 @@ agtermecho(true);                               \
     agtermecho(true);                    \
     agtermcurhidden(false);              \
     endwin();                            \
-    if(__cont != NULL){                  \
-        free(__cont->display._1D);       \
-        free(__cont->display._2D);       \
-        free(__cont->name);              \
-        free(__cont);                    \
-    }                                    \
     while(viwerr(VIWERR_OCCURED, NULL)){ \
     	viwerr(VIWERR_PRINT, NULL);      \
     }                                    \
@@ -981,7 +975,7 @@ int agcontup(agcont_t * container);
  * @brief 
  * For testing purposes.
  */
-__attribute__((deprecated))
+// __attribute__((deprecated))
 void agcontdraw(
     agcont_t * c, 
     agcoord_t pos
