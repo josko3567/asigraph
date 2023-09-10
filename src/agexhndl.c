@@ -47,16 +47,6 @@ void agexhndladd(
     void (*atexitfunc)(void))
 {
 
-    // struct sigaction act = {
-
-    //     .sa_handler  = sigfunc,
-    //     .sa_flags    = 0,
-    //     .sa_mask     = {0},
-    //     .sa_restorer = NULL
-
-    // };
-
-    // Add default action to exit's.
     signal(SIGABRT, sigfunc);
     signal(SIGINT , sigfunc);
     signal(SIGTERM, sigfunc);
@@ -68,7 +58,6 @@ void agexhndladd(
 #ifdef SIGHUP
     signal(SIGHUP , sigfunc);
 #endif
-    // signal
     atexit(atexitfunc);
 
     return;       
@@ -93,34 +82,5 @@ void __agexhndl_normal(void) {
         agexhndlsig,
         NULL
     );
-//     agtermecho(true); 
-//     agtermcurhidden(false);
-//     endwin();
-//     // agcont_t * cont = __cont;
-//     // __builtin_dump_struct(cont, &printf);
-//     if(__cont != NULL){
-//         free(__cont->display._1D);
-//         free(__cont->display._2D);
-//         free(__cont->name);
-//         free(__cont);
-//     }
-// #ifdef AG_DEV
-//     switch(agexhndlsig) {
-//         case SIGINT:
-//         printf("Ctrl-C exit.\n");
-//         break;
-
-//         case SIGSEGV:
-//         printf("Segfault occurred!\n");
-//         break;
-
-//         default:
-//         if(agexhndlsig != 0) printf("%d\n", agexhndlsig);
-//         break;
-//     }
-// #endif
-//     while(viwerr(VIWERR_OCCURED, NULL)){
-//     	viwerr(VIWERR_PRINT, NULL);
-//     }
 
 }
