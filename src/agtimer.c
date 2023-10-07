@@ -222,7 +222,7 @@ int agtimer(
  * to fix compilation.
  */
 #if __STDC_VERSION__ >= 199901L
-	#define _XOPEN_SOURCE 600
+#define _XOPEN_SOURCE 600
 #else
 	#define _XOPEN_SOURCE 500
 #endif

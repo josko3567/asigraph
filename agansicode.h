@@ -3,20 +3,6 @@
 
 #define agescseq printf
 
-// void * __agescseq(str, ...) {
-
-//         if(str == NULL) {
-//                 viwerr(VIWERR_PUSH, &(viwerr_package){
-//                         .code = EINVAL,
-//                         .group = AG_ERROR_GROUP,
-//                         .name = (char*)"__agescseq(?): invalid "
-//                         "parameter \"str\".",
-//                         .message = (char*)"__agescseq(?)"
-//                 });
-//         }
-
-// }
-
 /**
  * @brief 
  * Move back to the secondary screen buffer.

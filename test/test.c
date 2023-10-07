@@ -38,20 +38,20 @@ int main(void) {
             },
             .padding = 0
         },
-        .name = (wchar_t*)L"Temporary Container.",
+        .name = L"Temporary Container.",
         .border = AG_CONTAINER_BORDER_DEFAULT,
         .flag.render = true
     });
 
     wchar_t buffer[128] = {0};
-    double framerate, deltatime, target = 30.0;
+    double framerate, deltatime, target = 120.0;
 
     while(agtimer(target, &framerate, &deltatime) == 0) {
 
         if(agframe >= 12000) break;
 		// resize_term(0,0);
         if(agtermsizechanged == true){
-			printw("Hello");
+			// printw("Hello");
             agtermclear();
             __cont->update.all(__cont);
         }
@@ -60,14 +60,14 @@ int main(void) {
             framerate, br, agframe);
         wcsncpy((wchar_t*)(__cont->display._2D[1]+1), 
             buffer,
-            wcsnlen(buffer, 127) > AG_CONTAINER_X_LENGTH(__cont)-2 ? 
-                AG_CONTAINER_X_LENGTH(__cont)-2:
+            wcsnlen(buffer, 127) > AG_CONTAINER_X_LENGTH(__cont)-3 ? 
+                AG_CONTAINER_X_LENGTH(__cont)-3:
                 wcsnlen(buffer, 127)
         );
   
         agcontdraw(__cont, (agcoord_t){
-            .x = 0,
-            .y = 0,
+            .x = __cont->left.__curpos,
+            .y = __cont->top.__curpos,
             // .x = (COLS / 2) - (__cont->length.x / 2),
             // .y = (LINES / 2) - (__cont->length.y / 2),
         });

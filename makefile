@@ -172,7 +172,7 @@ else
 	find . -name "*.out" -type f -delete; \
 	find . -name  "*.so" -type f -delete; \
 	find . -name   "*.a" -type f -delete;
-   	REMOVE := rm -f $(OBJ) $(LIBRARY) $(BIN)
+   	REMOVE := rm -f $(OBJ) $(LIBRARY) $(BINEXEC)
 endif
 
 # Link library...

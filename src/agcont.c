@@ -22,7 +22,7 @@ void agcontsideup(
     container->top.__prepos    = container->top.__curpos;
     container->bottom.__prepos = container->bottom.__curpos;
 
-    agtermlimit_t tlim = agtermlimits();
+    aglimit_t tlim = agtermlimits();
 
     if(container->left.priority  == 1 
     && container->right.priority == 0 ){
@@ -537,7 +537,6 @@ int agcontup(
 
 }
 
-__attribute__((deprecated))
 void agcontdraw(agcont_t * ct, agcoord_t pos) {
 
     if(ct->flag.created == false
@@ -549,10 +548,11 @@ void agcontdraw(agcont_t * ct, agcoord_t pos) {
             .message = (char*)"agcontdraw(1) was given a container "
             "that was not first initalized with agcontinit(1).",
             .group = AG_ERROR_GROUP
-        });  
+        });
+        return;
     }
 
-    agtermlimit_t tlim = agtermlimits();
+    aglimit_t tlim = agtermlimits();
     wchar_t **display = ct->display._2D;
     int32_t ly = ct->length.y;
 
@@ -563,7 +563,7 @@ void agcontdraw(agcont_t * ct, agcoord_t pos) {
             x   = pos.x < 0 ? 0 : pos.x,     // Printing position x, static
             y0  = pos.y < 0 ? 0 - pos.y : 0, // Starting string, incremented
             x0  = pos.x < 0 ? 0 - pos.x : 0, // Starting string pos, static
-            len =                            // Length of printed part/whole str
+            len =                            // Length of printed part
                 (pos.x+ct->length.x < (int32_t)tlim.x.max ? 
                     pos.x+ct->length.x : (int32_t)tlim.x.max)
                 - (pos.x < (int32_t)tlim.x.min ? 
@@ -577,7 +577,7 @@ void agcontdraw(agcont_t * ct, agcoord_t pos) {
                 len
             );
         }
-    }                                          
+    }                                       
                                                   
 }
 

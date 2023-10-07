@@ -100,9 +100,9 @@
 #include "agansicode.h"
 #include "ext/viwerr/viwerr.h"
 
-#ifndef __BLOCKS__
-#	error must be compiled with -fblocks option enabled.
-#endif
+// #ifndef __BLOCKS__
+// #	error must be compiled with -fblocks option enabled.
+// #endif
 
 #ifndef ASIGRAPH_LIBRARY_INCLUDED
 #define ASIGRAPH_LIBRARY_INCLUDED
@@ -296,19 +296,19 @@ typedef struct agobj_st {
     }                                                                          \
 }
 
-typedef struct agtermlimit_st {
+typedef struct aglimit_st {
 
     struct {
-        uint32_t min;
-        uint32_t max;
+        int32_t min;
+        int32_t max;
     } x;
 
     struct {
-        uint32_t min;
-        uint32_t max;
+        int32_t min;
+        int32_t max;
     } y;
 
-} agtermlimit_t;
+} aglimit_t;
 
 /**
  * @typedef @c agside_t
@@ -556,10 +556,10 @@ int agtermecho(bool echos);
  * 
  * @throw None.
  * 
- * @return Returns a agtermlimit_t structure with the containing
+ * @return Returns a aglimit_t structure with the containing
  * x & y min & max. 
  */
-agtermlimit_t agtermlimits(void);
+aglimit_t agtermlimits(void);
 
 /**
  * @fn @c __agtermsizechanged(0)
@@ -975,7 +975,6 @@ int agcontup(agcont_t * container);
  * @brief 
  * For testing purposes.
  */
-// __attribute__((deprecated))
 void agcontdraw(
     agcont_t * c, 
     agcoord_t pos

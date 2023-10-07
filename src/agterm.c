@@ -25,9 +25,9 @@ int agtermecho(
 }
 
 inline __attribute__((always_inline))
-agtermlimit_t agtermlimits(void) {
+aglimit_t agtermlimits(void) {
 
-    return (agtermlimit_t){
+    return (aglimit_t){
         .x = {
             .min = 0,
             .max = COLS
@@ -41,7 +41,7 @@ agtermlimit_t agtermlimits(void) {
 }
 
 bool __agtermsizechanged(void) {
-    static agtermlimit_t prev = {0};
+    static aglimit_t prev = {0};
     static bool start = true;
     if(start) {
         prev = agtermlimits();

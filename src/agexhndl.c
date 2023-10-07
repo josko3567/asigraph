@@ -76,7 +76,6 @@ void __agexhndl_abnormal(int sig) {
 // These are phony exit handlers that push all the exit handling to agexhndl()
 void __agexhndl_normal(void) {
 
-
     agexhndl(
         AGEXHNDL_RUN,
         agexhndlsig,
